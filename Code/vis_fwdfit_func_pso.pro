@@ -10,9 +10,9 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
   mapcenter=extra.mapcenter
 
   n_particles = (size(xx,/dimension))[0]
-  n_vis = n_elements(u)
-  u = reform(u, [1, n_vis])
-  v = reform(v, [1, n_vis])
+  n_vis    = n_elements(u)
+  u        = reform(u, [1, n_vis])
+  v        = reform(v, [1, n_vis])
 
   if type eq 'circle' then begin
     
@@ -157,7 +157,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     pa = reform(pa, [n_particles,1])
 
     xx[*,1] = reform(sqrt(fwhmmajor[*, 0] * fwhmminor[*, 0]))
-    ecmsr = reform(-alog(fwhmminor[*, 0] / fwhmmajor[*, 0]))
+    ecmsr   = reform(-alog(fwhmminor[*, 0] / fwhmmajor[*, 0]))
 
     xx[*,2] = ecmsr * cos(reform(pa * !dtor))
     xx[*,3] = ecmsr * sin(reform(pa * !dtor))
@@ -198,19 +198,20 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
   
    
   if type eq 'multi' then begin
+    
       ones = fltarr(1, n_vis) + 1.
 
-      flag1=1
+      flag=1
       Catch, theError
       IF theError NE 0 THEN BEGIN
         Catch, /Cancel
         bad_fwhm1_multi:
-        flag1=0
+        flag=0
       ENDIF
       ; Set up file I/O error handling.
       ON_IOError, bad_fwhm1_multi
       ; Cause type conversion error.
-      if flag1 then xx[*, 0] = xx[*, 0] * 0. + double(param_opt[0])
+      if flag then xx[*, 0] = xx[*, 0] * 0. + double(param_opt[0])
       fwhm1 = reform(xx[*,0], [n_particles,1])
       
       flag=1
@@ -238,12 +239,14 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
       ; Set up file I/O error handling.
       ON_IOError, bad_fwhm2_multi
       ; Cause type conversion error.
-      if flag and flag1 then begin
-        tmp = double(param_opt[0])/double(param_opt[2])
-        if tmp gt 1. then tmp = 1./tmp
-        xx[*, 2] = xx[*, 2] * 0. +tmp
-     endif
-     fwhm2 = reform(xx[*,2], [n_particles,1])
+      if flag then xx[*, 2] = xx[*, 2] * 0. + double(param_opt[2])      
+      fwhm2 = reform(xx[*,2], [n_particles,1])     
+;      if flag2 and flag1 then begin
+;        tmp = double(param_opt[0])/double(param_opt[2])
+;        if tmp gt 1. then tmp = 1./tmp
+;        xx[*, 2] = xx[*, 2] * 0. +tmp
+;     endif
+
          
       flag=1
       Catch, theError
@@ -270,7 +273,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
       ; Set up file I/O error handling.
       ON_IOError, bad_x1_multi
       ; Cause type conversion error.
-      if flag then xx[*, 4] = xx[*, 4] * 0. + double(param_opt[4])
+      if flag then xx[*, 4] = xx[*, 4] * 0. + double(param_opt[5])-mapcenter[1]
       x1 = reform(xx[*,4], [n_particles,1])
             
       flag=1
@@ -283,7 +286,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
       ; Set up file I/O error handling.
       ON_IOError, bad_y1_multi
       ; Cause type conversion error.
-      if flag then xx[*, 5] = xx[*, 5] * 0. + double(param_opt[5])
+      if flag then xx[*, 5] = xx[*, 5] * 0. - double(param_opt[4])+mapcenter[0]
       y1 = reform(xx[*,5], [n_particles,1])
       
       flag=1
@@ -291,7 +294,6 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
       IF theError NE 0 THEN BEGIN
         Catch, /Cancel
         bad_x2_multi:
-        xx[*, 6] = xx[*, 6]
         flag=0
       ENDIF
       ; Set up file I/O error handling.
@@ -305,7 +307,6 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
       IF theError NE 0 THEN BEGIN
         Catch, /Cancel
         bad_y2_multi:
-        xx[*, 7] = xx[*, 7]
         flag=0
       ENDIF
       ; Set up file I/O error handling.
@@ -406,7 +407,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     pa = reform(pa, [n_particles,1])
 
     xx[*,1] = reform(sqrt(fwhmmajor[*, 0] * fwhmminor[*, 0]))
-    ecmsr = reform(-alog(fwhmminor[*, 0] / fwhmmajor[*, 0]))
+    ecmsr   = reform(-alog(fwhmminor[*, 0] / fwhmmajor[*, 0]))
 
     xx[*,2] = ecmsr * cos(reform(pa * !dtor))
     xx[*,3] = ecmsr * sin(reform(pa * !dtor))
@@ -450,8 +451,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     if flag then xx[*, 6] = xx[*, 6] * 0. + double(param_opt[6])
     loop_angle = reform(xx[*,6], [n_particles,1])
     
-    vis_pred=fltarr(n_particles,2*n_elements(u))
-    
+    ;vis_pred=fltarr(n_particles,2*n_elements(u))
     vis_pred=pso_func_makealoop_nov2021( flux, xx[*,1], eccen, x_loc, y_loc, pa, loop_angle, u, v)
 
     
