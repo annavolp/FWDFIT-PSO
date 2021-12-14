@@ -9,12 +9,13 @@
 ;   vis_fwdfit_pso_nov2021, type, vis, SwarmSize, uncertainty, param_opt, seedstart
 ;   
 ; CALLS:
-;   vis_fwdfit_pso_func             [to calculate model visibilities for a given set of source parameters]
-;   pso_func_makealoop_nov2021      [to calculate loop shape and its Fourier trasform]
+;   vis_fwdfit_func_PSO             [to calculate model visibilities for a given set of source parameters]
+;   pso_func_makealoop_nov2021      [to calculate loop Fourier trasform]
 ;   swarmintelligence               [to optimize]
 ;   vis_fwdfit_src_structure        [to create the source structure]
-;   VIS_FWDFIT_SRC_BIFURCATE        [to create a modified source structure based on bifurcation of input source structure]
-;   vis_FWDFIT_PSO_SOURCE2MAP       [to create the map]
+;   vis_fwdfit_src_bifurcate        [to create a modified source structure based on bifurcation of input source structure]
+;   vis_fwdfit_pso_source2map       [to create the map]
+;   vis_fwdfit_pso_vis_pred         [to create the fit map]
 ;   
 ;   
 ; INPUTS:
@@ -29,9 +30,7 @@
 ;     vis.sigamp: array containing the values of the errors on the observed visibility amplitudes
 ;     vis.u     : u coordinates of the sampling frequencies
 ;     vis.v     : v coordinates of the sampling frequencies
-;     
-;   n_free: degrees of freedom (difference between the number of visibility amplitudes and the number of
-;           parameters of the source shape)
+;
 ;
 ; KEYWORDS:
 ;   lb: array containing the lower bound values of the variables to optimize
@@ -69,11 +68,11 @@
 ;   SRCSTR names a source structure array to receive the fitted source parameters.
 ;   FITSIGMAS returns sigma in fitted quantities in SRCSTR.
 ;
-; HISTORY: January 2021, Massa P., Perracchione E. created
+; HISTORY: November 2021, Massa P., Volpara A. created
 ;
 ; CONTACT:
 ;   massa.p [at] dima.unige.it
-;   perracchione [at] dima.unige.it
+;   volpara [at] dima.unige.it
 
 function vis_fwdfit_pso_nov2021, type, vis, $
   lb = lb, ub = ub, $
@@ -84,14 +83,17 @@ function vis_fwdfit_pso_nov2021, type, vis, $
   silent = silent, $
   srcstr = srcstrout_pso, $
   fitsigmas =fitsigmasout_pso, $
-  seedstart = seedstart
+  seedstart = seedstart, $
+  no_plot_fit = no_plot_fit
+
 
   default, SwarmSize, 100.
   default, TolFun, 1e-06
   default, silent, 0
   default, imsize, [128,128]
   default, pixel, [1.,1.]
-  default, seedstart, 0
+  default, seedstart, 0  
+  default, no_plot_fit, 0
 
   phi= max(abs(vis.obsvis)) ;estimate_flux
 
@@ -138,7 +140,8 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     sigamp: ssigamp, $
     u: vis.u, $
     v: vis.v, $
-    n_free: nvis - Nvars, $
+    n_free: nvis - Nvars, $           ;n_free: degrees of freedom (difference between the number of visibility amplitudes 
+                                      ;and the number of parameters of the source shape)
     param_opt: param_opt, $
     mapcenter : vis.xyoffset }
 
@@ -596,8 +599,104 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 ;  add_prop,fwdfit_pso_map,B0=0.
 ;  add_prop,fwdfit_pso_map,L0=0.
 
-  srcstrout_pso = srcstr
-  fitsigmasout_pso = fitsigmas 
+
+srcstrout_pso = srcstr
+fitsigmasout_pso = fitsigmas
+
+
+if ~no_plot_fit then begin
+
+  visobs = vis.obsvis
+  phaseobs = atan(imaginary(visobs), float(visobs)) * !radeg
+  visobs2=[float(visobs),imaginary(visobs)]
+
+  srcstrout0 = srcstrout_pso
+  visobsmap = vis_fwdfit_pso_vis_pred(srcstrout0, vis, type)
+;  phaseobsmap =  atan(visobsmap[*,1], visobsmap[*,0]) * !radeg
+;  ampobsmap = sqrt(visobsmap[*,0]^2 + visobsmap[*,1]^2)
+;  
+
+  phaseobsmap =  atan(visobsmap[n_elements(vis):2*n_elements(vis)-1], visobsmap[0:n_elements(vis)-1]) * !radeg
+  ampobsmap = sqrt(visobsmap[0:n_elements(vis)-1]^2 + visobsmap[n_elements(vis):2*n_elements(vis)-1]^2)
+
+  sigamp = vis.sigamp
+  sigamp2 = [vis.sigamp, vis.sigamp]
+  sigphase = sigamp / abs(visobs)  * !radeg
+
+
+  xx = (findgen(30))/3. + 1.2
+  xx = xx[6:29]
+  
+  nfree = n_elements(vis)-nvars
+  chi2  = total(abs(visobsmap - visobs2)^2./sigamp2^2.)/nfree
+
+
+  charsize = 1.5
+  leg_size = 1.5
+  thick = 1.8
+  symsize = 1.8
+
+  units_phase = 'degrees'
+  units_amp   = 'counts s!U-1!n keV!U-1!n'
+  xtitle      = 'Detector label'
+
+  window, 1, xsize=1200, ysize=500
+
+  loadct, 5
+  linecolors, /quiet
+
+  set_viewport,0.1, 0.45, 0.1, 0.85
+
+  plot, xx, phaseobs, /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
+    title='VISIBILITY PHASE FIT PSO', $
+    xtitle=xtitle, ytitle=units_phase, yrange=yrange, charsize=charsize, thick=thick, /noe
+
+  ; draw vertical dotted lines at each detector boundary
+  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
+
+
+  errplot, xx, (phaseobs - sigphase > !y.crange[0]), (phaseobs + sigphase < !y.crange[1]), $
+    width=0, thick=thick, COLOR=7
+  oplot, xx, phaseobs, psym=7, thick=thick, symsize=symsize
+  oplot, xx, phaseobsmap, psym=4, col=2, thick=thick, symsize=symsize
+
+
+  leg_text = ['Observed', 'Error on Observed', 'From Image']
+  leg_color = [255, 7,2]
+  leg_style = [0, 0, 0]
+  leg_sym = [7, -3, 4]
+  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
+
+
+  set_viewport,0.5, 0.95, 0.1, 0.85
+
+  ;plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
+  plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
+    title='VISIBILITY AMPLITUDE FIT PSO - CHI2: ' + trim(chi2, '(f12.2)'), $
+    xtitle=xtitle, ytitle=units, yrange=yrange, charsize=charsize, thick=thick, /noe
+
+  ; draw vertical dotted lines at each detector boundary
+  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
+
+
+  errplot, xx, (abs(visobs) - sigamp > !y.crange[0]), (abs(visobs) + sigamp < !y.crange[1]), $
+    width=0, thick=thick, COLOR=7
+  oplot, xx, abs(visobs), psym=7, thick=thick, symsize=symsize
+  oplot, xx, ampobsmap, psym=4, col=2, thick=thick, symsize=symsize
+
+
+  leg_text = ['Observed', 'Error on Observed', 'From Image']
+  leg_color = [255, 7,2]
+  leg_style = [0, 0, 0]
+  leg_sym = [7, -3, 4]
+  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
+
+  !p.position = [0, 0, 0, 0]
+
+endif
+
+
+
   return, fwdfit_pso_map  
 
 end

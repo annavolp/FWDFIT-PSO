@@ -58,7 +58,8 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
     xx = srcstrout[n].srcx
     srcstrout[n].srcx = -srcstrout[n].srcy + vis0[0].xyoffset[0]
     srcstrout[n].srcy = xx + vis0[0].xyoffset[1]
-    srcstrout[n].srcpa -= 90.
+   ;srcstrout[n].srcpa -= 90.
+    srcstrout[n].srcpa += 90.     ;anna
     
     xx = fitstddev[n].srcx
     fitstddev[n].srcx = fitstddev[n].srcy 
@@ -110,6 +111,7 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
     
   visobs = vis0.obsvis
   phaseobs = atan(imaginary(visobs), float(visobs)) * !radeg
+  visobs2=[float(visobs),imaginary(visobs)]
   
   srcstrout0 = srcstrout
   visobsmap = vis_fwdfit_vis_pred(srcstrout0, vis0)
@@ -117,13 +119,14 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
   ampobsmap = sqrt(visobsmap[0:n_elements(vis0)-1]^2 + visobsmap[n_elements(vis0):2*n_elements(vis0)-1]^2)
   
   sigamp = vis0.sigamp
+  sigamp2= [sigamp, sigamp]
   sigphase = sigamp / abs(visobs)  * !radeg
 
 
   xx = (findgen(30))/3. + 1.2
   xx = xx[6:29]
 
-  chi2 = total(abs(visobsmap - visobs)^2./sigamp^2.)/n_free
+  chi2 = total(abs(visobsmap - visobs2)^2./sigamp2^2.)/n_free
 
 
   charsize = 1.5
