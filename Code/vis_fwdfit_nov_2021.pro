@@ -12,10 +12,12 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
   
   vis = vis0
   
-  ind = where(vis.v lt 0.)
-  vis[ind].u = -vis[ind].u
-  vis[ind].v = -vis[ind].v
-  vis[ind].obsvis = conj(vis[ind].obsvis)
+  ind = where(vis.v lt 0., count)
+  if count ne 0 then begin
+    vis[ind].u = -vis[ind].u
+    vis[ind].v = -vis[ind].v
+    vis[ind].obsvis = conj(vis[ind].obsvis)
+  endif
   
   vis.sigamp = sqrt(vis.sigamp^2 - 0.05^2 * abs(vis.obsvis)^2) ; VIS_FWDFIT add 5% systematic error inside the procedure
   vis.xyoffset *= 0.

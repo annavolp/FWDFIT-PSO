@@ -14,7 +14,7 @@ yy = srcstr.srcy - vis[0].xyoffset[1]
 
 srcstr.srcx   = yy
 srcstr.srcy   = -xx
-srcstr.srcpa += 90.
+srcstr.srcpa -= 90.
 
 srcparm  = vis_fwdfit_structure2array(srcstr, mapcenter)
 jdum     = FINDGEN(2 * n_elements(vis))
