@@ -14,7 +14,7 @@ relflux0    = FACTORIAL(ncirc0-1) / (FLOAT(FACTORIAL(iseq0)*FACTORIAL(ncirc0-1-i
 ok          = WHERE(relflux0 GT 0.01, ncirc)      ; Just keep circles that contain at least 1% of flux
 relflux     = relflux0[ok] / TOTAL(relflux0[ok])
 iseq        = INDGEN(ncirc)
-reltheta    = (iseq/(ncirc-1.) - 0.5)          ; locations of circles for arclength=1
+reltheta    = (iseq/(ncirc-1.) - 0.5)             ; locations of circles for arclength=1
 factor      = SQRT(TOTAL(reltheta^2 *relflux)) * SIG2FWHM   ; FWHM of binomial distribution for arclength=1
 
 loopangle  = loop_angle* !DTOR / factor
@@ -32,7 +32,7 @@ if iind gt 0 then yloop[ind,*] = -yloop[ind,*]              ; Sign of loopangle 
 ; Determine the size and location of the equivalent separated components in a coord system where...
 ; x is an axis parallel to the line joining the footpoints
 ; Note that there are combinations of loop angle, sigminor and sigmajor that cannot occur with radius>1arcsec.
-;   In such a case circle radius is set to 1.  Such cases will lead to bad solutions and be flagged as such at the end.
+; In such a case circle radius is set to 1.  Such cases will lead to bad solutions and be flagged as such at the end.
 
 sigminor    = fwhm1* (1-eccen^2)^0.25 / SIG2FWHM
 sigmajor    = fwhm1/ (1-eccen^2)^0.25 / SIG2FWHM
@@ -46,12 +46,13 @@ sep         = 2.*loopradius * ABS(SIN(theta[*,0]))
 cgshift     = loopradius * fsumy
 
 ; Calculate source structures for each circle.
-pasep          = pa*!DTOR             ; position angle of line joining arc endpoints
+pasep     = pa*!DTOR                        ; position angle of line joining arc endpoints
 
-relx=fltarr(n_part, ncirc)            ; x is axis joining 'footpoints'
-rely= fltarr(n_part, ncirc)           ; will enable emission centroid location to be unchanged
-x_loc_new=fltarr(n_part, ncirc)
-y_loc_new=fltarr(n_part, ncirc)
+relx      = fltarr(n_part, ncirc)           ; x is axis joining 'footpoints'
+rely      = fltarr(n_part, ncirc)           ; will enable emission centroid location to be unchanged
+x_loc_new = fltarr(n_part, ncirc)
+y_loc_new = fltarr(n_part, ncirc)
+
 for j=0,n_part-1 do begin
   relx[j,*]        = xloop[j,*] * loopradius[j]
   rely[j,*]        = yloop[j,*] * loopradius[j]  - cgshift[j]
@@ -59,31 +60,27 @@ for j=0,n_part-1 do begin
   y_loc_new[j,*]   = y_loc[j] + relx[j,*] * COS(pasep[j]) + rely[j,*] * SIN(pasep[j])
 endfor
 
+obs      = fltarr(2*n_vis, n_part)
+flux_new = flux # relflux               ; Split the flux between components.
 
-obs             = fltarr(2*n_vis, n_part)      ; nvis-element vector
-flux_new       = flux # relflux               ; Split the flux between components.
-
-;    for j=0,n_part-1 do begin
-;        x_loc_new[j,*]      = x_loc[j] - relx[j,*] * SIN(pasep[j]) + rely[j,*] * COS(pasep[j])
-;        y_loc_new[j,*]      = y_loc[j] + relx[j,*] * COS(pasep[j]) + rely[j,*] * SIN(pasep[j])
-;    endfor
-arg            = -!pi^2 *  circfwhm^2. / (4. * alog(2.)) # (u^2 + v^2)
-relvis          = EXP(arg)
+arg      = -!pi^2 *  circfwhm^2. / (4. * alog(2.)) # (u^2 + v^2)
+relvis   = EXP(arg)
 
 ;phase=fltarr(n_part, n_vis)
-re_obs=fltarr(n_part, n_vis)
-im_obs=fltarr(n_part, n_vis)
-ones = fltarr(1, n_vis) + 1.
+re_obs = fltarr(n_part, n_vis)
+im_obs = fltarr(n_part, n_vis)
+ones   = fltarr(1, n_vis) + 1.
 
 for j=0, ncirc-1 do begin
   phase           = 2.*!pi * (x_loc_new[*,j] # u  + y_loc_new[*,j] # v)
-  fflux=flux_new[*,j] #ones
-  re_obs   += fflux * relvis * COS(phase)    ; Each component is added to previous sum
-  im_obs   += fflux * relvis * SIN(phase)
+  fflux           = flux_new[*,j] #ones
+  re_obs          += fflux * relvis * COS(phase)    ; Each component is added to previous sum
+  im_obs          += fflux * relvis * SIN(phase)
 endfor
-obs=[[re_obs], [im_obs]]
+
+obs = [[re_obs], [im_obs]]
 
 
 RETURN, obs
 
-END
+END 

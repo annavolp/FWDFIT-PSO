@@ -30,12 +30,13 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
       ok          = WHERE(relflux0 GT 0.01, ncirc)      ; Just keep circles that contain at least 1% of flux
       relflux     = relflux0[ok] / TOTAL(relflux0[ok])
       iseq        = INDGEN(ncirc)
-      reltheta    = (iseq/(ncirc-1.) - 0.5)          ; locations of circles for arclength=1
+      reltheta    = (iseq/(ncirc-1.) - 0.5)                       ; locations of circles for arclength=1
       factor      = SQRT(TOTAL(reltheta^2 *relflux)) * SIG2FWHM   ; FWHM of binomial distribution for arclength=1
 
       loopangle   = srcstr.loop_angle* !DTOR / factor
       IF ABS(loopangle) GT 1.99*!PI THEN MESSAGE, 'Internal parameterization error - Loop arc exceeds 2pi.'
       IF loopangle EQ 0 THEN loopangle = 0.01                     ; radians. Avoids problems if loopangle = 0
+      
       theta       = ABS(loopangle) * (iseq/(ncirc-1.) - 0.5)      ; equispaced between +- loopangle/2
       xloop       = SIN(theta)                                    ; for unit radius of curvature, R
       yloop       = COS(theta)                                    ; relaive to center of curvature
@@ -44,7 +45,7 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
       ; Determine the size and location of the equivalent separated components in a coord system where...
       ; x is an axis parallel to the line joining the footpoints
       ; Note that there are combinations of loop angle, sigminor and sigmajor that cannot occur with radius>1arcsec.
-      ;   In such a case circle radius is set to 1.  Such cases will lead to bad solutions and be flagged as such at the end.
+      ; In such a case circle radius is set to 1.  Such cases will lead to bad solutions and be flagged as such at the end.
 
       sigminor    = srcstr.srcfwhm_min / SIG2FWHM
       sigmajor    = srcstr.srcfwhm_max / SIG2FWHM
@@ -65,8 +66,8 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
       eccen_new   = 0                                  ; Circular sources
       pa_new      = 0
 
-      nsrc = N_ELEMENTS(srcstr)
-      ;data    = FLTARR(129,129)
+      sinus       = sin(pasep*!dtor)
+      cosinus     = cos(pasep*!dtor)
 
       FOR i = 0,n_elements(iseq)-1 do begin
 
@@ -74,8 +75,6 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
         x_loc_new   = srcstr.srcx - relx[i]* SIN(pasep) + rely[i]* COS(pasep)
         y_loc_new   = srcstr.srcy + relx[i]* COS(pasep) + rely[i]* SIN(pasep)
 
-        sinus       = sin(pasep*!dtor)
-        cosinus     = cos(pasep*!dtor)
         x_tmp       = ((x-x_loc_new)*cosinus) + ((y-y_loc_new)*sinus)
         y_tmp       = - ((x-x_loc_new)*sinus) + ((y-y_loc_new)*cosinus)
         x_tmp       = 2.*sqrt( 2.*alog(2.) )*x_tmp/circfwhm
@@ -91,11 +90,6 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
       ycen     = srcstr[n].srcy
       flux     = srcstr[n].srcflux
 
-;      eccen    = srcstr[n].eccen
-;      fwhm     = srcstr[n].srcfwhm
-;      fwhmminor   = fwhm * (1-eccen^2)^0.25
-;      fwhmmajor   = fwhm / (1-eccen^2)^0.25
-
       fwhm_max = srcstr[n].srcfwhm_max
       fwhm_min = srcstr[n].srcfwhm_min
       pa       = srcstr[n].srcpa
@@ -105,17 +99,17 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
 
       x_tmp    = ((x-xcen)*cosinus) + ((y-ycen)*sinus)
       y_tmp    = - ((x-xcen)*sinus) + ((y-ycen)*cosinus)
-
-;      x_tmp    = 2.*sqrt( 2.*alog(2.) )*x_tmp/fwhmmajor
-;      y_tmp    = 2.*sqrt( 2.*alog(2.) )*y_tmp/fwhmminor
+      
     if fwhm_max eq 0 or fwhm_min eq 0 then begin
+      
         x_tmp = x_tmp*0.
         y_tmp = y_tmp*0.
+        
      endif else begin
+      
         x_tmp    = 2.*sqrt( 2.*alog(2.) )*x_tmp/fwhm_max
         y_tmp    = 2.*sqrt( 2.*alog(2.) )*y_tmp/fwhm_min
            
-      
      endelse
 
      im_tmp   = exp(-((x_tmp)^2. + (y_tmp)^2.)/2.)
@@ -131,7 +125,6 @@ function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, type=type, pixel=pixel, imsize=mapsi
 
   ENDFOR
 
-  return, make_map(data, xcen=xyoffset[0],ycen=xyoffset[1], dx = pixel[0], dy = pixel[1], $
-    id = 'STIX PSO' ) ;id = 'STIX from visibilities')
+  return, make_map(data, xcen=xyoffset[0],ycen=xyoffset[1], dx = pixel[0], dy = pixel[1], id = 'STIX PSO' )
 
 END

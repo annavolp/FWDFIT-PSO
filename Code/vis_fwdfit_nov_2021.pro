@@ -1,5 +1,5 @@
 FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITSTDDEV=fitstddev,QFLAG=qflag,REDCHISQ=redchisq,NITER=niter, NFREE=nfree, $
-  vf_vis_window=vf_vis_window,xyoffset=xyoffset,image_out = image_out,silent=silent,_REF_EXTRA=extra, no_plot_fit=no_plot_fit
+  vf_vis_window=vf_vis_window,xyoffset=xyoffset,image_out = image_out,silent=silent,_REF_EXTRA=extra;, no_plot_fit=no_plot_fit
 
   ; wrapper around VIS_FWDFIT
   ; output map structure has north up
@@ -8,7 +8,7 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
 
   ;Look for stix visibility structure and extract the vis bag if necessary in hsi-like format
   default, shape, 'circle'
-  default, no_plot_fit, 0
+  ;default, no_plot_fit, 0
   
   vis = vis0
   
@@ -19,29 +19,29 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
     vis[ind].obsvis = conj(vis[ind].obsvis)
   endif
   
-  vis.sigamp = sqrt(vis.sigamp^2 - 0.05^2 * abs(vis.obsvis)^2) ; VIS_FWDFIT add 5% systematic error inside the procedure
+  ;vis.sigamp = sqrt(vis.sigamp^2 - 0.05^2 * abs(vis.obsvis)^2) ; VIS_FWDFIT add 5% systematic error inside the procedure
   vis.xyoffset *= 0.
   
   case shape of
     
     'circle': begin
               n_free = n_elements(vis)-4
-              vis_fwdfit, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
+              vis_fwdfit_dic2021, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
                           NITER=niter, NFREE=nfree, vf_vis_window=vf_vis_window, circle=1, /noplotfit, /quiet
               end
     'ellipse': begin
                n_free = n_elements(vis)-6
-               vis_fwdfit, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
+               vis_fwdfit_dic2021, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
                           NITER=niter, NFREE=nfree, vf_vis_window=vf_vis_window, circle=0,/noplotfit, /quiet
               end
      'multi': begin
               n_free = n_elements(vis)-8
-              vis_fwdfit, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
+              vis_fwdfit_dic2021, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
                           NITER=niter, NFREE=nfree, vf_vis_window=vf_vis_window, multi=1, /noplotfit, /quiet
               end
       'loop': begin
               n_free = n_elements(vis)-7
-              vis_fwdfit, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
+              vis_fwdfit_dic2021, vis, SRCOUT=srcstrout, FITSTDDEV=fitstddev, QFLAG=qflag, REDCHISQ=redchisq, $
                           NITER=niter, NFREE=nfree, vf_vis_window=vf_vis_window, loop=1, /noplotfit, /quiet
               end
   endcase
@@ -109,90 +109,90 @@ FUNCTION vis_fwdfit_nov_2021,vis0,imsize,pixel,shape=shape,SRCOUT=srcstrout,FITS
   add_prop,vis_fwdfit_map,B0=0.
   add_prop,vis_fwdfit_map,L0=0.
   
-  if ~no_plot_fit then begin
-    
-  visobs = vis0.obsvis
-  phaseobs = atan(imaginary(visobs), float(visobs)) * !radeg
-  visobs2=[float(visobs),imaginary(visobs)]
-  
-  srcstrout0 = srcstrout
-  visobsmap = vis_fwdfit_vis_pred(srcstrout0, vis0)
-  phaseobsmap =  atan(visobsmap[n_elements(vis0):2*n_elements(vis0)-1], visobsmap[0:n_elements(vis0)-1]) * !radeg
-  ampobsmap = sqrt(visobsmap[0:n_elements(vis0)-1]^2 + visobsmap[n_elements(vis0):2*n_elements(vis0)-1]^2)
-  
-  sigamp = vis0.sigamp
-  sigamp2= [sigamp, sigamp]
-  sigphase = sigamp / abs(visobs)  * !radeg
-
-
-  xx = (findgen(30))/3. + 1.2
-  xx = xx[6:29]
-
-  chi2 = total(abs(visobsmap - visobs2)^2./sigamp2^2.)/n_free
-
-
-  charsize = 1.5
-  leg_size = 1.5
-  thick = 1.8
-  symsize = 1.8
-
-  units_phase = 'degrees'
-  units_amp   = 'counts s!U-1!n keV!U-1!n'
-  xtitle      = 'Detector label'
-
-  window, 0, xsize=1200, ysize=500
-
-  loadct, 5
-  linecolors, /quiet
-
-  set_viewport,0.1, 0.45, 0.1, 0.85
-
-  plot, xx, phaseobs, /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
-    title='VISIBILITY PHASE FIT FWDFIT', $
-    xtitle=xtitle, ytitle=units_phase, yrange=yrange, charsize=charsize, thick=thick, /noe
-
-  ; draw vertical dotted lines at each detector boundary
-  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
-
-
-  errplot, xx, (phaseobs - sigphase > !y.crange[0]), (phaseobs + sigphase < !y.crange[1]), $
-    width=0, thick=thick, COLOR=7
-  oplot, xx, phaseobs, psym=7, thick=thick, symsize=symsize
-  oplot, xx, phaseobsmap, psym=4, col=2, thick=thick, symsize=symsize
-
-
-  leg_text = ['Observed', 'Error on Observed', 'From Image']
-  leg_color = [255, 7,2]
-  leg_style = [0, 0, 0]
-  leg_sym = [7, -3, 4]
-  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
-
-
-  set_viewport,0.5, 0.95, 0.1, 0.85
-
-  plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
-    title='VISIBILITY AMPLITUDE FIT FWDFIT - CHI2: ' + trim(chi2, '(f12.2)'), $
-    xtitle=xtitle, ytitle=units, yrange=yrange, charsize=charsize, thick=thick, /noe
-
-  ; draw vertical dotted lines at each detector boundary
-  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
-
-
-  errplot, xx, (abs(visobs) - sigamp > !y.crange[0]), (abs(visobs) + sigamp < !y.crange[1]), $
-    width=0, thick=thick, COLOR=7
-  oplot, xx, abs(visobs), psym=7, thick=thick, symsize=symsize
-  oplot, xx, ampobsmap, psym=4, col=2, thick=thick, symsize=symsize
-
-
-  leg_text = ['Observed', 'Error on Observed', 'From Image']
-  leg_color = [255, 7,2]
-  leg_style = [0, 0, 0]
-  leg_sym = [7, -3, 4]
-  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
-
-  !p.position = [0, 0, 0, 0]
-    
-  endif
+;  if ~no_plot_fit then begin
+;    
+;  visobs = vis0.obsvis
+;  phaseobs = atan(imaginary(visobs), float(visobs)) * !radeg
+;  visobs2=[float(visobs),imaginary(visobs)]
+;  
+;  srcstrout0 = srcstrout
+;  visobsmap = vis_fwdfit_vis_pred(srcstrout0, vis0)
+;  phaseobsmap =  atan(visobsmap[n_elements(vis0):2*n_elements(vis0)-1], visobsmap[0:n_elements(vis0)-1]) * !radeg
+;  ampobsmap = sqrt(visobsmap[0:n_elements(vis0)-1]^2 + visobsmap[n_elements(vis0):2*n_elements(vis0)-1]^2)
+;  
+;  sigamp = vis0.sigamp
+;  sigamp2= [sigamp, sigamp]
+;  sigphase = sigamp / abs(visobs)  * !radeg
+;
+;
+;  xx = (findgen(30))/3. + 1.2
+;  xx = xx[6:29]
+;
+;  chi2 = total(abs(visobsmap - visobs2)^2./sigamp2^2.)/n_free
+;
+;
+;  charsize = 1.5
+;  leg_size = 1.5
+;  thick = 1.8
+;  symsize = 1.8
+;
+;  units_phase = 'degrees'
+;  units_amp   = 'counts s!U-1!n keV!U-1!n'
+;  xtitle      = 'Detector label'
+;
+;  window, 0, xsize=1200, ysize=500
+;
+;  loadct, 5
+;  linecolors, /quiet
+;
+;  set_viewport,0.1, 0.45, 0.1, 0.85
+;
+;  plot, xx, phaseobs, /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
+;    title='VISIBILITY PHASE FIT FWDFIT', $
+;    xtitle=xtitle, ytitle=units_phase, yrange=yrange, charsize=charsize, thick=thick, /noe
+;
+;  ; draw vertical dotted lines at each detector boundary
+;  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
+;
+;
+;  errplot, xx, (phaseobs - sigphase > !y.crange[0]), (phaseobs + sigphase < !y.crange[1]), $
+;    width=0, thick=thick, COLOR=7
+;  oplot, xx, phaseobs, psym=7, thick=thick, symsize=symsize
+;  oplot, xx, phaseobsmap, psym=4, col=2, thick=thick, symsize=symsize
+;
+;
+;  leg_text = ['Observed', 'Error on Observed', 'From Image']
+;  leg_color = [255, 7,2]
+;  leg_style = [0, 0, 0]
+;  leg_sym = [7, -3, 4]
+;  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
+;
+;
+;  set_viewport,0.5, 0.95, 0.1, 0.85
+;
+;  plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
+;    title='VISIBILITY AMPLITUDE FIT FWDFIT - CHI2: ' + trim(chi2, '(f12.2)'), $
+;    xtitle=xtitle, ytitle=units, yrange=yrange, charsize=charsize, thick=thick, /noe
+;
+;  ; draw vertical dotted lines at each detector boundary
+;  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
+;
+;
+;  errplot, xx, (abs(visobs) - sigamp > !y.crange[0]), (abs(visobs) + sigamp < !y.crange[1]), $
+;    width=0, thick=thick, COLOR=7
+;  oplot, xx, abs(visobs), psym=7, thick=thick, symsize=symsize
+;  oplot, xx, ampobsmap, psym=4, col=2, thick=thick, symsize=symsize
+;
+;
+;  leg_text = ['Observed', 'Error on Observed', 'From Image']
+;  leg_color = [255, 7,2]
+;  leg_style = [0, 0, 0]
+;  leg_sym = [7, -3, 4]
+;  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
+;
+;  !p.position = [0, 0, 0, 0]
+;    
+;  endif
 
   return,vis_fwdfit_map
 

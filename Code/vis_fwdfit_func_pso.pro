@@ -7,7 +7,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
   v = extra.v
   n_free = extra.n_free
   param_opt = extra.param_opt
-  mapcenter=extra.mapcenter
+  mapcenter = extra.mapcenter
 
   n_particles = (size(xx,/dimension))[0]
   n_vis    = n_elements(u)
@@ -154,7 +154,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     ; Cause type conversion error.
     if flag then pa += double(param_opt[3])-90.
 
-    pa = reform(pa, [n_particles,1])
+    pa = reform(pa, [n_particles,1])  
 
     xx[*,1] = reform(sqrt(fwhmmajor[*, 0] * fwhmminor[*, 0]))
     ecmsr   = reform(-alog(fwhmminor[*, 0] / fwhmmajor[*, 0]))
@@ -390,20 +390,23 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     fwhmmajor = fwhmmajor # ones
 
     pa = fltarr(size(eccen, /dim))
+    
     flag=1
     Catch, theError
     IF theError NE 0 THEN BEGIN
       Catch, /Cancel
       bad_alpha_loop:
-      pa      = eccen * 0.
-      ind     = where(eccen GT 0.001)
-      pa[ind] = ATAN(ecsin[ind], eccos[ind]) * !RADEG
+      pa = atan(ecsin, eccos) * !radeg
+;      pa      = eccen * 0.
+;      ind     = where(eccen GT 0.001)
+;      pa[ind] = ATAN(ecsin[ind], eccos[ind]) * !RADEG
       flag=0
     ENDIF
     ; Set up file I/O error handling.
     ON_IOError, bad_alpha_loop
     ; Cause type conversion error.
-    if flag then pa += double(param_opt[3])-90. 
+    if flag then pa += double(param_opt[3])-90.;-180. 
+    
     pa = reform(pa, [n_particles,1])
 
     xx[*,1] = reform(sqrt(fwhmmajor[*, 0] * fwhmminor[*, 0]))
@@ -452,7 +455,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     loop_angle = reform(xx[*,6], [n_particles,1])
     
     ;vis_pred=fltarr(n_particles,2*n_elements(u))
-    vis_pred=pso_func_makealoop_nov2021( flux, xx[*,1], eccen, x_loc, y_loc, pa, loop_angle, u, v)
+    vis_pred = pso_func_makealoop_nov2021( flux, xx[*,1], eccen, x_loc, y_loc, pa, loop_angle, u, v)
 
     
 ;    for i=0, n_particles-1 do begin

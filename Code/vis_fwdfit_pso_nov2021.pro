@@ -9,7 +9,8 @@
 ;   vis_fwdfit_pso_nov2021, type, vis, SwarmSize, uncertainty, param_opt, seedstart
 ;   
 ; CALLS:
-;   vis_fwdfit_func_PSO             [to calculate model visibilities for a given set of source parameters]
+;   cmreplicate                     [replicates an array or scalar into a larger array, as REPLICATE does.]
+;   vis_fwdfit_func_pso             [to calculate model visibilities for a given set of source parameters]
 ;   pso_func_makealoop_nov2021      [to calculate loop Fourier trasform]
 ;   swarmintelligence               [to optimize]
 ;   vis_fwdfit_src_structure        [to create the source structure]
@@ -129,19 +130,19 @@ function vis_fwdfit_pso_nov2021, type, vis, $
   fun_name = 'vis_fwdfit_func_pso'
   Nvars = n_elements(lb)
 
-  visobs=[real_part(vis.obsvis), imaginary(vis.obsvis)]
-  nvis = N_ELEMENTS(visobs)
+  visobs = [real_part(vis.obsvis), imaginary(vis.obsvis)]
+  nvis   = N_ELEMENTS(visobs)
   vvisobs = transpose(cmreplicate(visobs, SwarmSize))
-  sigamp=[vis.sigamp,vis.sigamp]
-  ssigamp= transpose(cmreplicate(sigamp, SwarmSize))
+  sigamp  = [vis.sigamp,vis.sigamp]
+  ssigamp = transpose(cmreplicate(sigamp, SwarmSize))
 
   extra = {type: type, $
     visobs: vvisobs, $
     sigamp: ssigamp, $
     u: vis.u, $
     v: vis.v, $
-    n_free: nvis - Nvars, $           ;n_free: degrees of freedom (difference between the number of visibility amplitudes 
-                                      ;and the number of parameters of the source shape)
+    n_free: nvis - Nvars, $    ;n_free: degrees of freedom (difference between the number of visibility amplitudes 
+                               ;and the number of parameters of the source shape)
     param_opt: param_opt, $
     mapcenter : vis.xyoffset }
 
@@ -178,13 +179,13 @@ function vis_fwdfit_pso_nov2021, type, vis, $
       ntry = 20
 
       trial_results = fltarr(Nvars, ntry)
-      iseed=findgen(ntry)+seedstart
+      iseed = findgen(ntry)+seedstart
 
       for n=0,ntry-1 do begin
 
         testerror = RANDOMN(iseed[n], nvis)
         vistest   = visobs + testerror * sigamp
-        vistest = transpose(cmreplicate(vistest, SwarmSize))
+        vistest   = transpose(cmreplicate(vistest, SwarmSize))
 
         extra = {type: type, $
           visobs: vistest, $
@@ -204,11 +205,11 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
       std_dev_par = stddev(trial_results, dimension=2)
 
-      fitsigmas.srcflux         = std_dev_par[0]
-      fitsigmas.srcx            = std_dev_par[2]
-      fitsigmas.srcy            = std_dev_par[1]
-      fitsigmas.srcfwhm_max     = std_dev_par[3]
-      fitsigmas.srcfwhm_min     = std_dev_par[3]
+      fitsigmas.srcflux      = std_dev_par[0]
+      fitsigmas.srcx         = std_dev_par[2]
+      fitsigmas.srcy         = std_dev_par[1]
+      fitsigmas.srcfwhm_max  = std_dev_par[3]
+      fitsigmas.srcfwhm_min  = std_dev_par[3]
 
     endif
 
@@ -315,12 +316,12 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
     for i = 0,Nruns-1 do begin
       optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
-      f[i] = optim_f.fopt
-      xx_opt = [[xx_opt],optim_f.xopt]
+      f[i]    = optim_f.fopt
+      xx_opt  = [[xx_opt],optim_f.xopt]
     endfor
 
     dummy = min(f,location)
-    xopt = xx_opt(location,*)
+    xopt  = xx_opt(location,*)
 
     srcstr = {vis_fwdfit_src_structure}
     srcstr.srctype ='ellipse'
@@ -330,17 +331,17 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     fitsigmas.srctype ='std.dev'
     fitsigmas = VIS_FWDFIT_SRC_BIFURCATE(fitsigmas)
 
-    srcstr[0].srcflux         = xopt[1]
-    srcstr[0].srcfwhm_max     = xopt[0]
-    srcstr[0].srcfwhm_min     = xopt[0]
-    srcstr[0].srcx            = -xopt[5]+vis[0].xyoffset[0]
-    srcstr[0].srcy            = xopt[4]+vis[0].xyoffset[1]
+    srcstr[0].srcflux       = xopt[1]
+    srcstr[0].srcfwhm_max   = xopt[0]
+    srcstr[0].srcfwhm_min   = xopt[0]
+    srcstr[0].srcx          = -xopt[5]+vis[0].xyoffset[0]
+    srcstr[0].srcy          = xopt[4]+vis[0].xyoffset[1]
 
-    srcstr[1].srcflux         = xopt[3]
-    srcstr[1].srcfwhm_max     = xopt[2]
-    srcstr[1].srcfwhm_min     = xopt[2]
-    srcstr[1].srcx            = -xopt[7]+vis[0].xyoffset[0]
-    srcstr[1].srcy            = xopt[6]+vis[0].xyoffset[1]
+    srcstr[1].srcflux       = xopt[3]
+    srcstr[1].srcfwhm_max   = xopt[2]
+    srcstr[1].srcfwhm_min   = xopt[2]
+    srcstr[1].srcx          = -xopt[7]+vis[0].xyoffset[0]
+    srcstr[1].srcy          = xopt[6]+vis[0].xyoffset[1]
 
 
     if keyword_set(uncertainty) then begin
@@ -357,7 +358,7 @@ function vis_fwdfit_pso_nov2021, type, vis, $
         nn = n
         testerror  = RANDOMN(nn+seedstart, nvis)
         vistest    = visobs + testerror * sigamp
-        vistest   = transpose(cmreplicate(vistest, SwarmSize))
+        vistest    = transpose(cmreplicate(vistest, SwarmSize))
 
         extra = {type: type, $
           visobs: vistest, $
@@ -373,12 +374,12 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
         for i = 0,Nruns-1 do begin
           optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
-          f[i] = optim_f.fopt
-          xx_opt = [[xx_opt],optim_f.xopt]
+          f[i]    = optim_f.fopt
+          xx_opt  = [[xx_opt],optim_f.xopt]
         endfor
 
         dummy = min(f,location)
-        xopt = xx_opt(location,*)
+        xopt  = xx_opt(location,*)
 
 
         trial_results[0, n] = xopt[1]                   ;flux1
@@ -391,9 +392,8 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
         trial_results[6, n] = xopt[6]                   ;x2
         trial_results[7, n] = xopt[7]                   ;y2
-
-
-      endfor
+     
+     endfor
 
 
       fitsigmas[0].srcflux     = stddev(trial_results[0,*])
@@ -427,12 +427,12 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
     for i = 0,Nruns-1 do begin
       optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
-      f[i] = optim_f.fopt
-      xx_opt = [[xx_opt],optim_f.xopt]
+      f[i]    = optim_f.fopt
+      xx_opt  = [[xx_opt],optim_f.xopt]
     endfor
 
     dummy = min(f,location)
-    xopt = xx_opt(location,*)
+    xopt  = xx_opt(location,*)
 
     srcstr = {vis_fwdfit_src_structure}
     srcstr.srctype = 'loop'
@@ -458,33 +458,6 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
     srcstr.loop_angle  = xopt[6]
 
-
-    ;  optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
-    ;  xopt = optim_f.xopt
-    ;
-    ;  srcstr = {amp_src_structure}
-    ;  srcstr.srctype    ='loop'
-    ;
-    ;  fitsigmas = {amp_src_structure}
-    ;  fitsigmas.srctype ='std.dev'
-    ;
-    ;  srcstr.srcflux = xopt[0]
-    ;
-    ;  ecmsr = REFORM(SQRT(xopt[2]^2 + xopt[3]^2))
-    ;  eccen = SQRT(1 - EXP(-2*ecmsr))
-    ;
-    ;  IF eccen GT 0.001 THEN srcstr.srcpa = reform(ATAN(xopt[3], xopt[2]) * !RADEG) - 90.
-    ;  IF srcstr.srcpa lt 0. then srcstr.srcpa += 180.
-    ;
-    ;  srcstr.srcfwhm_min = xopt[1] * (1-eccen^2)^0.25
-    ;  srcstr.srcfwhm_max = xopt[1] / (1-eccen^2)^0.25
-    ;
-    ;  srcstr.srcx        = -xopt[5]+vis[0].xyoffset[0]
-    ;  srcstr.srcy        = xopt[4]+vis[0].xyoffset[1]
-    ;
-    ;  srcstr.loop_angle  = xopt[6]
-
-
     if keyword_set(uncertainty) then begin
 
       print, ' '
@@ -493,7 +466,6 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
       ntry = 20
       trial_results = fltarr(Nvars, ntry)
-      ;iseed=findgen(ntry)+seedstart
 
       for n=0,ntry-1 do begin
         nn=n
@@ -515,17 +487,13 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
         for i = 0,Nruns-1 do begin
           optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
-          f[i] = optim_f.fopt
-          xx_opt = [[xx_opt],optim_f.xopt]
+          f[i]    = optim_f.fopt
+          xx_opt  = [[xx_opt],optim_f.xopt]
         endfor
 
         dummy = min(f,location)
-        xopt = xx_opt(location,*)
-
-        ;optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
-        ;xopt = optim_f.xopt
-
-
+        xopt  = xx_opt(location,*)
+      
         ecmsr = REFORM(SQRT(xopt[2]^2 + xopt[3]^2))
         eccen = SQRT(1 - EXP(-2*ecmsr))
 
@@ -593,34 +561,31 @@ function vis_fwdfit_pso_nov2021, type, vis, $
   fwdfit_pso_map.yc = vis[0].xyoffset[1]
   this_time_range   = stx_time2any(vis[0].time_range,/vms)
   fwdfit_pso_map.time = anytim((anytim(this_time_range[1])+anytim(this_time_range[0]))/2.,/vms)
-  fwdfit_pso_map.DUR = anytim(this_time_range[1])-anytim(this_time_range[0])
+  fwdfit_pso_map.DUR  = anytim(this_time_range[1])-anytim(this_time_range[0])
   ;eventually fill in radial distance etc
-;  add_prop,fwdfit_pso_map,rsun=0.
-;  add_prop,fwdfit_pso_map,B0=0.
-;  add_prop,fwdfit_pso_map,L0=0.
+  add_prop,fwdfit_pso_map,rsun=0.
+  add_prop,fwdfit_pso_map,B0=0.
+  add_prop,fwdfit_pso_map,L0=0.
 
 
-srcstrout_pso = srcstr
+srcstrout_pso    = srcstr
 fitsigmasout_pso = fitsigmas
 
 
 if ~no_plot_fit then begin
 
-  visobs = vis.obsvis
+  visobs   = vis.obsvis
   phaseobs = atan(imaginary(visobs), float(visobs)) * !radeg
-  visobs2=[float(visobs),imaginary(visobs)]
+  visobs2  = [float(visobs),imaginary(visobs)]
 
   srcstrout0 = srcstrout_pso
-  visobsmap = vis_fwdfit_pso_vis_pred(srcstrout0, vis, type)
-;  phaseobsmap =  atan(visobsmap[*,1], visobsmap[*,0]) * !radeg
-;  ampobsmap = sqrt(visobsmap[*,0]^2 + visobsmap[*,1]^2)
-;  
+  visobsmap  = vis_fwdfit_pso_vis_pred(srcstrout0, vis, type)  
 
   phaseobsmap =  atan(visobsmap[n_elements(vis):2*n_elements(vis)-1], visobsmap[0:n_elements(vis)-1]) * !radeg
-  ampobsmap = sqrt(visobsmap[0:n_elements(vis)-1]^2 + visobsmap[n_elements(vis):2*n_elements(vis)-1]^2)
+  ampobsmap   = sqrt(visobsmap[0:n_elements(vis)-1]^2 + visobsmap[n_elements(vis):2*n_elements(vis)-1]^2)
 
-  sigamp = vis.sigamp
-  sigamp2 = [vis.sigamp, vis.sigamp]
+  sigamp   = vis.sigamp
+  sigamp2  = [vis.sigamp, vis.sigamp]
   sigphase = sigamp / abs(visobs)  * !radeg
 
 
@@ -629,7 +594,6 @@ if ~no_plot_fit then begin
   
   nfree = n_elements(vis)-nvars
   chi2  = total(abs(visobsmap - visobs2)^2./sigamp2^2.)/nfree
-
 
   charsize = 1.5
   leg_size = 1.5
@@ -670,14 +634,12 @@ if ~no_plot_fit then begin
 
   set_viewport,0.5, 0.95, 0.1, 0.85
 
-  ;plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
   plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
     title='VISIBILITY AMPLITUDE FIT PSO - CHI2: ' + trim(chi2, '(f12.2)'), $
     xtitle=xtitle, ytitle=units, yrange=yrange, charsize=charsize, thick=thick, /noe
 
   ; draw vertical dotted lines at each detector boundary
   for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
-
 
   errplot, xx, (abs(visobs) - sigamp > !y.crange[0]), (abs(visobs) + sigamp < !y.crange[1]), $
     width=0, thick=thick, COLOR=7
@@ -696,7 +658,6 @@ if ~no_plot_fit then begin
 endif
 
 
-
-  return, fwdfit_pso_map  
+return, fwdfit_pso_map  
 
 end

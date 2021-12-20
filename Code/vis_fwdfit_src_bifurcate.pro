@@ -17,6 +17,6 @@ FUNCTION VIS_FWDFIT_SRC_BIFURCATE, srcstr0
   srcstr.srcy     = srcstr.srcy
   srcstr.srcfwhm_max  = srcstr0.srcfwhm_max   ;Reproduces moment orthogonal to separation
   srcstr.srcfwhm_min  = srcstr0.srcfwhm_min
-  srcstr.srcpa  = 0
+  srcstr.srcpa    = 0
   RETURN, srcstr
 END

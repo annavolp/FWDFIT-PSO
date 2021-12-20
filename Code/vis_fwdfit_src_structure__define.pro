@@ -3,9 +3,6 @@ PRO vis_fwdfit_src_structure__define
   ; Defines a structure that defines one component of a source structure used by hsi_vis_fwdfit and related modules.
   ;
   ; {hsi_vis_source_structure} returns the following structure
-  ;
-
-  ;
 
   dummy = {vis_fwdfit_src_structure,   $
     srctype:      ' ',      $   ; Label indicating source type
