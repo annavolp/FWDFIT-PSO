@@ -72,7 +72,6 @@
 ; HISTORY: November 2021, Massa P., Volpara A. created
 ;
 ; CONTACT:
-;   massa.p [at] dima.unige.it
 ;   volpara [at] dima.unige.it
 
 function vis_fwdfit_pso_nov2021, type, vis, $
