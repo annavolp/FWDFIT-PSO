@@ -1,11 +1,10 @@
-PRO vis_fwdfit_src_structure
+PRO vis_fwdfit_pso_src_structure__define
   ;
   ; Defines a structure that defines one component of a source structure used by hsi_vis_fwdfit and related modules.
   ;
   ; {hsi_vis_source_structure} returns the following structure
 
-
-  dummy = {vis_fwdfit_src_structure,   $
+  dummy = {vis_fwdfit_pso_src_structure,   $
     srctype:      ' ',      $   ; Label indicating source type
     srcflux:       0.,      $   ; Semi-calibrated flux (ph/cm2/s)
     srcx:          0.,      $   ; X-offset (+W) relative to sun center (arcsec)

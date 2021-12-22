@@ -1,4 +1,4 @@
-FUNCTION VIS_FWDFIT_SRC_BIFURCATE, srcstr0
+FUNCTION VIS_FWDFIT_PSO_SRC_BIFURCATE, srcstr0
   ;
   ; Returns a modified fwdfit source structure based on bifurcation of input source structure.
   ;

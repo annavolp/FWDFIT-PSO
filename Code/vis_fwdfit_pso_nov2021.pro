@@ -13,8 +13,8 @@
 ;   vis_fwdfit_func_pso             [to calculate visibilities for a given set of source parameters]
 ;   pso_func_makealoop_nov2021      [to calculate loop Fourier trasform]
 ;   swarmintelligence               [to PSO procedure for optimizing the parameters]
-;   vis_fwdfit_src_structure        [to create the source structure]
-;   vis_fwdfit_src_bifurcate        [to create a modified source structure based on bifurcation of input source structure]
+;   vis_fwdfit_pso_src_structure        [to create the source structure]
+;   vis_fwdfit_pso_src_bifurcate        [to create a modified source structure based on bifurcation of input source structure]
 ;   vis_fwdfit_pso_source2map       [to create the map from the optimized parameters]
 ;   vis_fwdfit_pso_vis_pred         [to create the plot of the visibility phase and amplitude fit]
 ;   
@@ -161,10 +161,10 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
     xopt = optim_f.xopt
 
-    srcstr = {vis_fwdfit_src_structure}
+    srcstr = {vis_fwdfit_pso_src_structure}
     srcstr.srctype ='circle'
 
-    fitsigmas = {vis_fwdfit_src_structure}
+    fitsigmas = {vis_fwdfit_pso_src_structure}
     fitsigmas.srctype ='std.dev'
 
     srcstr.srcflux         = xopt[0]
@@ -231,10 +231,10 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
     xopt = optim_f.xopt
 
-    srcstr = {vis_fwdfit_src_structure}
+    srcstr = {vis_fwdfit_pso_src_structure}
     srcstr.srctype    ='ellipse'
 
-    fitsigmas = {vis_fwdfit_src_structure}
+    fitsigmas = {vis_fwdfit_pso_src_structure}
     fitsigmas.srctype ='std.dev'
 
     srcstr.srcflux = xopt[0]
@@ -331,13 +331,13 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     dummy = min(f,location)
     xopt  = xx_opt(location,*)
 
-    srcstr = {vis_fwdfit_src_structure}
+    srcstr = {vis_fwdfit_pso_src_structure}
     srcstr.srctype ='ellipse'
-    srcstr = VIS_FWDFIT_SRC_BIFURCATE(srcstr)
+    srcstr = VIS_FWDFIT_PSO_SRC_BIFURCATE(srcstr)
 
-    fitsigmas = {vis_fwdfit_src_structure}
+    fitsigmas = {vis_fwdfit_pso_src_structure}
     fitsigmas.srctype ='std.dev'
-    fitsigmas = VIS_FWDFIT_SRC_BIFURCATE(fitsigmas)
+    fitsigmas = VIS_FWDFIT_PSO_SRC_BIFURCATE(fitsigmas)
 
     srcstr[0].srcflux       = xopt[1]
     srcstr[0].srcfwhm_max   = xopt[0]
@@ -444,10 +444,10 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     dummy = min(f,location)
     xopt  = xx_opt(location,*)
 
-    srcstr = {vis_fwdfit_src_structure}
+    srcstr = {vis_fwdfit_pso_src_structure}
     srcstr.srctype = 'loop'
 
-    fitsigmas = {vis_fwdfit_src_structure}
+    fitsigmas = {vis_fwdfit_pso_src_structure}
     fitsigmas.srctype = 'std.dev'
 
     srcstr.srcflux = xopt[0]
