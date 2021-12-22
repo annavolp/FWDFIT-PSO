@@ -6,17 +6,17 @@
 ;   forward fitting method from visibility based on Particle Swarm Optimization
 ;
 ; CALLING SEQUENCE:
-;   vis_fwdfit_pso_nov2021, type, vis, SwarmSize, uncertainty, param_opt, seedstart
+;   vis_fwdfit_pso_nov2021, type, vis
 ;   
 ; CALLS:
 ;   cmreplicate                     [replicates an array or scalar into a larger array, as REPLICATE does.]
-;   vis_fwdfit_func_pso             [to calculate model visibilities for a given set of source parameters]
+;   vis_fwdfit_func_pso             [to calculate visibilities for a given set of source parameters]
 ;   pso_func_makealoop_nov2021      [to calculate loop Fourier trasform]
-;   swarmintelligence               [to optimize]
+;   swarmintelligence               [to PSO procedure for optimizing the parameters]
 ;   vis_fwdfit_src_structure        [to create the source structure]
 ;   vis_fwdfit_src_bifurcate        [to create a modified source structure based on bifurcation of input source structure]
-;   vis_fwdfit_pso_source2map       [to create the map]
-;   vis_fwdfit_pso_vis_pred         [to create the fit map]
+;   vis_fwdfit_pso_source2map       [to create the map from the optimized parameters]
+;   vis_fwdfit_pso_vis_pred         [to create the plot of the visibility phase and amplitude fit]
 ;   
 ;   
 ; INPUTS:
@@ -26,8 +26,8 @@
 ;         - 'multi'  : double Gaussian circular source
 ;         - 'loop'   : single curved elliptical gaussian
 ;
-;   vis         : struct containing  the observed visibility
-;     vis.obsvis: array containing the values of the observed visibility amplitudes
+;   vis         : struct containing  the observed visibility values
+;     vis.obsvis: array containing the values of the observed visibilit
 ;     vis.sigamp: array containing the values of the errors on the observed visibility amplitudes
 ;     vis.u     : u coordinates of the sampling frequencies
 ;     vis.v     : v coordinates of the sampling frequencies
@@ -42,7 +42,7 @@
 ;       - 'circle'  : lb,ub = [flux, x location, y location, FWHM]
 ;       - 'ellipse' : lb,ub = [flux, FWHM, ecc * cos(alpha), ecc * sin(alpha), x location, y location] 
 ;                     'ecc' is the eccentricity of the ellipse and 'alpha' is the orientation angle
-;       - 'multi'   : lb,ub = [FWHM1, flux1, FWHM2, flux2, x location, y location, x2 location, y2 location] 
+;       - 'multi'   : lb,ub = [FWHM1, flux1, FWHM2, flux2, x1 location, y1 location, x2 location, y2 location] 
 ;       - 'loop'    : lb,ub = [flux, FWHM, ecc * cos(alpha), ecc * sin(alpha), x location, y location, loop_angle]
 ;       
 ;   param_opt: array containing the values of the parameters to keep fixed during the optimization. 
@@ -57,6 +57,8 @@
 ;       - 'multi'   : param_opt = [FWHM1, flux1, FWHM2, flux2, x1 location, y1 location, x2 location, y2 location] 
 ;       - 'loop'    : param_opt = [flux, FWHM max, FWHM min, alpha, x location, y location, loop_angle]
 ;
+;   Example (circular source): setting param_opt = ['10', 'fit', 'fit', 'fit'], we fix the total flux of the source equal to 10
+;                              and we fit the remaining parameters
 ;
 ;   SwarmSize   : number of particles used in PSO (default is 100)
 ;   TolFun      : tolerance for the stopping criterion (default is 1e-6)
@@ -66,13 +68,12 @@
 ;   silent      : set to 1 for avoiding the print of the retrieved parameters
 ;   
 ;   
-;   SRCSTR names a source structure array to receive the fitted source parameters.
-;   FITSIGMAS returns sigma in fitted quantities in SRCSTR.
+;   SRCSTR: structure containing the values of the fitted parameters.
+;   FITSIGMAS structure containing the values of the uncertainty on the fitted parameters.
 ;
-; HISTORY: November 2021, Massa P., Volpara A. created
+; HISTORY: November 2021, Volpara A. created
 ;
 ; CONTACT:
-;   massa.p [at] dima.unige.it
 ;   volpara [at] dima.unige.it
 
 function vis_fwdfit_pso_nov2021, type, vis, $
@@ -93,7 +94,7 @@ function vis_fwdfit_pso_nov2021, type, vis, $
   default, silent, 0
   default, imsize, [128,128]
   default, pixel, [1.,1.]
-  default, seedstart, 0  
+  default, seedstart, fix(randomu(seed) * 100)
   default, no_plot_fit, 0
 
   phi= max(abs(vis.obsvis)) ;estimate_flux
