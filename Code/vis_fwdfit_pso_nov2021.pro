@@ -72,6 +72,7 @@
 ; HISTORY: November 2021, Massa P., Volpara A. created
 ;
 ; CONTACT:
+;   massa.p [at] dima.unige.it
 ;   volpara [at] dima.unige.it
 
 function vis_fwdfit_pso_nov2021, type, vis, $
@@ -151,9 +152,11 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     
     n_free = nvis - 4.
 
-    if (n_elements(param_opt) ne 4) or (n_elements(lb) ne 4) or (n_elements(ub) ne 4) $
-      then message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
-
+    if (n_elements(param_opt) ne 4) or (n_elements(lb) ne 4) or (n_elements(ub) ne 4) then begin
+        UNDEFINE, lb, ub, param_opt
+        message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    endif
+    
     optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
     xopt = optim_f.xopt
 
@@ -218,8 +221,11 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     
     n_free = nvis-6.
 
-    if (n_elements(param_opt) ne 6) or (n_elements(lb) ne 6) or (n_elements(ub) ne 6) $
-      then message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    if (n_elements(param_opt) ne 6) or (n_elements(lb) ne 6) or (n_elements(ub) ne 6) then begin
+      UNDEFINE, lb, ub, param_opt
+      message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    endif
+      
 
     optim_f = swarmintelligence(fun_name, Nvars, lb, ub, SwarmSize, TolFun, maxiter, extra = extra)
     xopt = optim_f.xopt
@@ -306,8 +312,10 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     
     n_free = nvis-8.
     
-    if (n_elements(param_opt) ne 8) or (n_elements(lb) ne 8) or (n_elements(ub) ne 8) $
-      then message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    if (n_elements(param_opt) ne 8) or (n_elements(lb) ne 8) or (n_elements(ub) ne 8) then begin
+      UNDEFINE, lb, ub, param_opt
+      message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    endif
 
     Nruns = 20
     xx_opt = []
@@ -417,8 +425,10 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     
     n_free = nvis-7.
 
-    if (n_elements(param_opt) ne 7) or (n_elements(lb) ne 7) or (n_elements(ub) ne 7) $
-      then message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    if (n_elements(param_opt) ne 7) or (n_elements(lb) ne 7) or (n_elements(ub) ne 7) then begin
+      UNDEFINE, lb, ub, param_opt
+      message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
+    endif
 
     Nruns = 10
     xx_opt = []
