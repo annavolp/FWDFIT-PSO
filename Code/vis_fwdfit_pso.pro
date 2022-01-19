@@ -1,17 +1,17 @@
 
 ; NAME: 
-;   vis_fwdfit_pso_nov2021
+;   vis_fwdfit_pso
 ;
 ; PURPOSE:
 ;   forward fitting method from visibility based on Particle Swarm Optimization
 ;
 ; CALLING SEQUENCE:
-;   vis_fwdfit_pso_nov2021, type, vis
+;   vis_fwdfit_pso, type, vis
 ;   
 ; CALLS:
 ;   cmreplicate                     [replicates an array or scalar into a larger array, as REPLICATE does.]
 ;   vis_fwdfit_func_pso             [to calculate visibilities for a given set of source parameters]
-;   pso_func_makealoop_nov2021      [to calculate loop Fourier trasform]
+;   pso_func_makealoop              [to calculate loop Fourier trasform]
 ;   swarmintelligence               [to PSO procedure for optimizing the parameters]
 ;   vis_fwdfit_pso_src_structure        [to create the source structure]
 ;   vis_fwdfit_pso_src_bifurcate        [to create a modified source structure based on bifurcation of input source structure]
@@ -76,17 +76,14 @@
 ; CONTACT:
 ;   volpara [at] dima.unige.it
 
-function vis_fwdfit_pso_nov2021, type, vis, $
+function vis_fwdfit_pso, type, vis, $
   lb = lb, ub = ub, $
   param_opt = param_opt, $
   SwarmSize = SwarmSize, TolFun = TolFun, maxiter = maxiter, $
   uncertainty = uncertainty, $
   imsize=imsize, pixel=pixel, $
   silent = silent, $
-  srcstr = srcstrout_pso, $
-  fitsigmas =fitsigmasout_pso, $
-  seedstart = seedstart, $
-  no_plot_fit = no_plot_fit
+  seedstart = seedstart
 
 
   default, SwarmSize, 100.
@@ -95,7 +92,6 @@ function vis_fwdfit_pso_nov2021, type, vis, $
   default, imsize, [128,128]
   default, pixel, [1.,1.]
   default, seedstart, fix(randomu(seed) * 100)
-  default, no_plot_fit, 0
 
   phi= max(abs(vis.obsvis)) ;estimate_flux
 
@@ -154,7 +150,9 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     n_free = nvis - 4.
 
     if (n_elements(param_opt) ne 4) or (n_elements(lb) ne 4) or (n_elements(ub) ne 4) then begin
-        UNDEFINE, lb, ub, param_opt
+        UNDEFINE, lb
+        UNDEFINE, ub
+        UNDEFINE, param_opt
         message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
     endif
     
@@ -223,7 +221,9 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     n_free = nvis-6.
 
     if (n_elements(param_opt) ne 6) or (n_elements(lb) ne 6) or (n_elements(ub) ne 6) then begin
-      UNDEFINE, lb, ub, param_opt
+      UNDEFINE, lb
+      UNDEFINE, ub
+      UNDEFINE, param_opt
       message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
     endif
       
@@ -314,7 +314,9 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     n_free = nvis-8.
     
     if (n_elements(param_opt) ne 8) or (n_elements(lb) ne 8) or (n_elements(ub) ne 8) then begin
-      UNDEFINE, lb, ub, param_opt
+      UNDEFINE, lb
+      UNDEFINE, ub
+      UNDEFINE, param_opt
       message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
     endif
 
@@ -427,11 +429,13 @@ function vis_fwdfit_pso_nov2021, type, vis, $
     n_free = nvis-7.
 
     if (n_elements(param_opt) ne 7) or (n_elements(lb) ne 7) or (n_elements(ub) ne 7) then begin
-      UNDEFINE, lb, ub, param_opt
+      UNDEFINE, lb
+      UNDEFINE, ub
+      UNDEFINE, param_opt
       message, 'Wrong number of elements of lower bound, upper bound or parameter mask'
     endif
 
-    Nruns = 10
+    Nruns = 5
     xx_opt = []
     f = fltarr(Nruns)
 
@@ -553,121 +557,12 @@ function vis_fwdfit_pso_nov2021, type, vis, $
 
   endif
 
-  UNDEFINE, lb, ub, param_opt
-    ;return, {srcstr: srcstr, fitsigmas: fitsigmas}
+  UNDEFINE, lb
+  UNDEFINE, ub
+  UNDEFINE, param_opt
   
-;  param_out = { srcout: srcstr, sigma: fitsigmas, $
-;  ;niter: niter, $
-;    ;redchi2: redchisq, nfree: nfree, qflag: qflag, 
-;    vf_vis_window: fcheck( vf_vis_window, -1) }
-
-  fwdfit_pso_map = vis_FWDFIT_PSO_SOURCE2MAP(srcstr, type=type, pixel=pixel, imsize=imsize, xyoffset=vis[0].xyoffset)
-
-  this_estring=strtrim(fix(vis[0].energy_range[0]),2)+'-'+strtrim(fix(vis[0].energy_range[1]),2)+' keV'
-  fwdfit_pso_map.ID = 'STIX VIS_PSO '+this_estring+': '
-  fwdfit_pso_map.dx = pixel[0]
-  fwdfit_pso_map.dy = pixel[1]
-  fwdfit_pso_map.xc = vis[0].xyoffset[0]
-  fwdfit_pso_map.yc = vis[0].xyoffset[1]
-  this_time_range   = stx_time2any(vis[0].time_range,/vms)
-  fwdfit_pso_map.time = anytim((anytim(this_time_range[1])+anytim(this_time_range[0]))/2.,/vms)
-  fwdfit_pso_map.DUR  = anytim(this_time_range[1])-anytim(this_time_range[0])
-  ;eventually fill in radial distance etc
-  add_prop,fwdfit_pso_map,rsun=0.
-  add_prop,fwdfit_pso_map,B0=0.
-  add_prop,fwdfit_pso_map,L0=0.
-
-
-srcstrout_pso    = srcstr
-fitsigmasout_pso = fitsigmas
-
-
-if ~no_plot_fit then begin
-
-  visobs   = vis.obsvis
-  phaseobs = atan(imaginary(visobs), float(visobs)) * !radeg
-  visobs2  = [float(visobs),imaginary(visobs)]
-
-  srcstrout0 = srcstrout_pso
-  visobsmap  = vis_fwdfit_pso_vis_pred(srcstrout0, vis, type)  
-
-  phaseobsmap =  atan(visobsmap[n_elements(vis):2*n_elements(vis)-1], visobsmap[0:n_elements(vis)-1]) * !radeg
-  ampobsmap   = sqrt(visobsmap[0:n_elements(vis)-1]^2 + visobsmap[n_elements(vis):2*n_elements(vis)-1]^2)
-
-  sigamp   = vis.sigamp
-  sigamp2  = [vis.sigamp, vis.sigamp]
-  sigphase = sigamp / abs(visobs)  * !radeg
-
-
-  xx = (findgen(30))/3. + 1.2
-  xx = xx[6:29]
+  param_out = { srcstr: srcstr, fitsigmas: fitsigmas}
   
-  nfree = n_elements(vis)-nvars
-  chi2  = total(abs(visobsmap - visobs2)^2./sigamp2^2.)/nfree
-
-  charsize = 1.5
-  leg_size = 1.5
-  thick = 1.8
-  symsize = 1.8
-
-  units_phase = 'degrees'
-  units_amp   = 'counts s!U-1!n keV!U-1!n'
-  xtitle      = 'Detector label'
-
-  window, 1, xsize=1200, ysize=500
-
-  loadct, 5
-  linecolors, /quiet
-
-  set_viewport,0.1, 0.45, 0.1, 0.85
-
-  plot, xx, phaseobs, /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
-    title='VISIBILITY PHASE FIT PSO', $
-    xtitle=xtitle, ytitle=units_phase, yrange=yrange, charsize=charsize, thick=thick, /noe
-
-  ; draw vertical dotted lines at each detector boundary
-  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
-
-
-  errplot, xx, (phaseobs - sigphase > !y.crange[0]), (phaseobs + sigphase < !y.crange[1]), $
-    width=0, thick=thick, COLOR=7
-  oplot, xx, phaseobs, psym=7, thick=thick, symsize=symsize
-  oplot, xx, phaseobsmap, psym=4, col=2, thick=thick, symsize=symsize
-
-
-  leg_text = ['Observed', 'Error on Observed', 'From Image']
-  leg_color = [255, 7,2]
-  leg_style = [0, 0, 0]
-  leg_sym = [7, -3, 4]
-  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
-
-
-  set_viewport,0.5, 0.95, 0.1, 0.85
-
-  plot, xx, abs(visobs), /nodata, xrange=[1.,11.], /xst, xtickinterval=1, xminor=-1, $
-    title='VISIBILITY AMPLITUDE FIT PSO - CHI2: ' + trim(chi2, '(f12.2)'), $
-    xtitle=xtitle, ytitle=units, yrange=yrange, charsize=charsize, thick=thick, /noe
-
-  ; draw vertical dotted lines at each detector boundary
-  for i=1,10 do oplot, i+[0,0], !y.crange, linestyle=1
-
-  errplot, xx, (abs(visobs) - sigamp > !y.crange[0]), (abs(visobs) + sigamp < !y.crange[1]), $
-    width=0, thick=thick, COLOR=7
-  oplot, xx, abs(visobs), psym=7, thick=thick, symsize=symsize
-  oplot, xx, ampobsmap, psym=4, col=2, thick=thick, symsize=symsize
-
-
-  leg_text = ['Observed', 'Error on Observed', 'From Image']
-  leg_color = [255, 7,2]
-  leg_style = [0, 0, 0]
-  leg_sym = [7, -3, 4]
-  ssw_legend, leg_text, psym=leg_sym, color=leg_color, linest=leg_style, box=0, charsize=leg_size, thick=thick, /left
-
-  !p.position = [0, 0, 0, 0]
-
-endif
-
-
-return, fwdfit_pso_map  
+return, param_out  
 
 end

@@ -1,4 +1,4 @@
-FUNCTION PSO_func_MAKEALOOP_nov2021, flux, fwhm1, eccen, x_loc, y_loc, pa, loop_angle, u, v
+FUNCTION vis_fwdfit_pso_func_makealoop, flux, fwhm1, eccen, x_loc, y_loc, pa, loop_angle, u, v
 
 n_part      = n_elements(fwhm1)
 n_vis       = n_elements(u)

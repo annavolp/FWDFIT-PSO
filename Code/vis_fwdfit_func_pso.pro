@@ -455,7 +455,7 @@ FUNCTION vis_fwdfit_func_pso, xx, extra = extra
     loop_angle = reform(xx[*,6], [n_particles,1])
     
     ;vis_pred=fltarr(n_particles,2*n_elements(u))
-    vis_pred = pso_func_makealoop_nov2021( flux, xx[*,1], eccen, x_loc, y_loc, pa, loop_angle, u, v)
+    vis_pred = vis_fwdfit_pso_func_makealoop( flux, xx[*,1], eccen, x_loc, y_loc, pa, loop_angle, u, v)
 
     
 ;    for i=0, n_particles-1 do begin

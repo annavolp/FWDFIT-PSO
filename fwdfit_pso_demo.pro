@@ -58,13 +58,16 @@ vis_pred_image_pso = F # im_map[*]
 re_vis_pred_image_pso = real_part(vis_pred_image_pso)
 im_vis_pred_image_pso = imaginary(vis_pred_image_pso)
 
-;fwdfit_pso_map = vis_fwdfit_pso_nov2021(type, vis, imsize=imsize, pixel=pixel)
-;
-;
-;loadct,5
-;window, 2
-;plot_map, fwdfit_pso_map, /cbar
-;
-;stix_plot_fit, fwdfit_pso_map, vis, imsize, pixel, wwindow=3, title=title
+type='ellipse'
+
+; Comments:
+; 1) use the keyword 'param_opt' to fix some of the parameters (and fit the remaining ones);
+;    Please, see the header of the FWDFIT-PSO procedure for details
+; 2) 'srcstrout_pso' is a structure containing the values of the optimized parameters
+; 3) 'fitsigmasout_pso' is a structure containing the uncertainty on the optimized parameters
+; 4) set /uncertainty for computing an estimate of the uncertainty on the parameters
+
+vis_fwdfit_pso_map = vis_fwdfit_pso_stix(type, vis,  param_opt=param_opt, imsize=imsize, pixel=pixel, $
+                                        srcstr = srcstrout_pso, fitsigmas=fitsigmasout_pso, /uncertainty)
 
 end

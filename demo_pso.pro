@@ -39,18 +39,18 @@ pixel     = [1.,1.]       ; pixel size in arcsec
 type='ellipse'
 
 ; Comments:
-; 1) to avoid the plot of the phase and amplitude fit, set /no_plot_fit;
-; 2) use the keyword 'param_opt' to fix some of the parameters (and fit the remaining ones);
+; 1) use the keyword 'param_opt' to fix some of the parameters (and fit the remaining ones);
 ;    Please, see the header of the FWDFIT-PSO procedure for details
-; 3) 'srcstrout_pso' is a structure containing the values of the optimized parameters
-; 4) 'fitsigmasout_pso' is a structure containing the uncertainty on the optimized parameters
-; 5) set /uncertainty for computing an estimate of the uncertainty on the parameters
+; 2) 'srcstrout_pso' is a structure containing the values of the optimized parameters
+; 3) 'fitsigmasout_pso' is a structure containing the uncertainty on the optimized parameters
+; 4) set /uncertainty for computing an estimate of the uncertainty on the parameters
 
-fwdfit_pso_map = vis_fwdfit_pso_nov2021(type, vis,  param_opt=param_opt, imsize=imsize, pixel=pixel, srcstr = srcstrout_pso, fitsigmas=fitsigmasout_pso, /uncertainty)
-
+vis_fwdfit_pso_map = vis_fwdfit_pso_stix(type, vis,  param_opt=param_opt, imsize=imsize, pixel=pixel, $
+                                        srcstr = srcstrout_pso, fitsigmas=fitsigmasout_pso, /uncertainty)
+                                        
 loadct, 5
 window, 0
 cleanplot
-plot_map, fwdfit_pso_map, /cbar
+plot_map, vis_fwdfit_pso_map, /cbar
 
 end
