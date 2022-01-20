@@ -341,17 +341,67 @@ function vis_fwdfit_pso, type, vis, $
     fitsigmas.srctype ='std.dev'
     fitsigmas = VIS_FWDFIT_PSO_SRC_BIFURCATE(fitsigmas)
 
-    srcstr[0].srcflux       = xopt[1]
-    srcstr[0].srcfwhm_max   = xopt[0]
-    srcstr[0].srcfwhm_min   = xopt[0]
-    srcstr[0].srcx          = -xopt[5]+vis[0].xyoffset[0]
-    srcstr[0].srcy          = xopt[4]+vis[0].xyoffset[1]
+    if (xopt[5] - xopt[7]) ge 3. then begin
+      
+      srcstr[0].srcflux       = xopt[1]
+      srcstr[0].srcfwhm_max   = xopt[0]
+      srcstr[0].srcfwhm_min   = xopt[0]
+      srcstr[0].srcx          = -xopt[5]+vis[0].xyoffset[0]
+      srcstr[0].srcy          = xopt[4]+vis[0].xyoffset[1]
 
-    srcstr[1].srcflux       = xopt[3]
-    srcstr[1].srcfwhm_max   = xopt[2]
-    srcstr[1].srcfwhm_min   = xopt[2]
-    srcstr[1].srcx          = -xopt[7]+vis[0].xyoffset[0]
-    srcstr[1].srcy          = xopt[6]+vis[0].xyoffset[1]
+      srcstr[1].srcflux       = xopt[3]
+      srcstr[1].srcfwhm_max   = xopt[2]
+      srcstr[1].srcfwhm_min   = xopt[2]
+      srcstr[1].srcx          = -xopt[7]+vis[0].xyoffset[0]
+      srcstr[1].srcy          = xopt[6]+vis[0].xyoffset[1]
+      
+    endif else begin
+        if (xopt[7] - xopt[5]) ge 3. then begin
+         
+            srcstr[1].srcflux       = xopt[1]
+            srcstr[1].srcfwhm_max   = xopt[0]
+            srcstr[1].srcfwhm_min   = xopt[0]
+            srcstr[1].srcx          = -xopt[5]+vis[0].xyoffset[0]
+            srcstr[1].srcy          = xopt[4]+vis[0].xyoffset[1]
+      
+            srcstr[0].srcflux       = xopt[3]
+            srcstr[0].srcfwhm_max   = xopt[2]
+            srcstr[0].srcfwhm_min   = xopt[2]
+            srcstr[0].srcx          = -xopt[7]+vis[0].xyoffset[0]
+            srcstr[0].srcy          = xopt[6]+vis[0].xyoffset[1]
+    
+        endif else begin
+            if xopt[4] ge xopt[6] then begin
+          
+              srcstr[0].srcflux       = xopt[1]
+              srcstr[0].srcfwhm_max   = xopt[0]
+              srcstr[0].srcfwhm_min   = xopt[0]
+              srcstr[0].srcx          = -xopt[5]+vis[0].xyoffset[0]
+              srcstr[0].srcy          = xopt[4]+vis[0].xyoffset[1]
+    
+              srcstr[1].srcflux       = xopt[3]
+              srcstr[1].srcfwhm_max   = xopt[2]
+              srcstr[1].srcfwhm_min   = xopt[2]
+              srcstr[1].srcx          = -xopt[7]+vis[0].xyoffset[0]
+              srcstr[1].srcy          = xopt[6]+vis[0].xyoffset[1]
+          
+            endif  else begin
+              
+              srcstr[1].srcflux       = xopt[1]
+              srcstr[1].srcfwhm_max   = xopt[0]
+              srcstr[1].srcfwhm_min   = xopt[0]
+              srcstr[1].srcx          = -xopt[5]+vis[0].xyoffset[0]
+              srcstr[1].srcy          = xopt[4]+vis[0].xyoffset[1]
+    
+              srcstr[0].srcflux       = xopt[3]
+              srcstr[0].srcfwhm_max   = xopt[2]
+              srcstr[0].srcfwhm_min   = xopt[2]
+              srcstr[0].srcx          = -xopt[7]+vis[0].xyoffset[0]
+              srcstr[0].srcy          = xopt[6]+vis[0].xyoffset[1]
+          
+            endelse     
+        endelse    
+      endelse
 
 
     if keyword_set(uncertainty) then begin
@@ -392,16 +442,63 @@ function vis_fwdfit_pso, type, vis, $
         xopt  = xx_opt(location,*)
 
 
-        trial_results[0, n] = xopt[1]                   ;flux1
-        trial_results[1, n] = xopt[0]                   ;FWHM1
-        trial_results[2, n] = xopt[3]                   ;flux2
-        trial_results[3, n] = xopt[2]                   ;FWHM2
+       ; the first source is the one with the minor x
+       if (xopt[5] - xopt[7]) ge 3. then begin
 
-        trial_results[4, n] = xopt[4]                   ;x1
-        trial_results[5, n] = xopt[5]                   ;y1
+          trial_results[0, n] = xopt[1]                   ;flux1
+          trial_results[1, n] = xopt[0]                   ;FWHM1
+          trial_results[2, n] = xopt[3]                   ;flux2
+          trial_results[3, n] = xopt[2]                   ;FWHM2
 
-        trial_results[6, n] = xopt[6]                   ;x2
-        trial_results[7, n] = xopt[7]                   ;y2
+          trial_results[4, n] = xopt[4]                   ;x1
+          trial_results[5, n] = xopt[5]                   ;y1
+
+          trial_results[6, n] = xopt[6]                   ;x2
+          trial_results[7, n] = xopt[7]                   ;y2
+
+       endif else begin
+         if (xopt[7] - xopt[5]) ge 3. then begin
+
+          trial_results[0, n] = xopt[3]                   ;flux1
+          trial_results[1, n] = xopt[2]                   ;FWHM1
+          trial_results[2, n] = xopt[1]                   ;flux2
+          trial_results[3, n] = xopt[0]                   ;FWHM2
+
+          trial_results[4, n] = xopt[6]                   ;x1
+          trial_results[5, n] = xopt[7]                   ;y1
+
+          trial_results[6, n] = xopt[4]                   ;x2
+          trial_results[7, n] = xopt[5]                   ;y2
+
+         endif else begin
+           if xopt[4] ge xopt[6] then begin
+
+              trial_results[0, n] = xopt[1]                   ;flux1
+              trial_results[1, n] = xopt[0]                   ;FWHM1
+              trial_results[2, n] = xopt[3]                   ;flux2
+              trial_results[3, n] = xopt[2]                   ;FWHM2
+    
+              trial_results[4, n] = xopt[4]                   ;x1
+              trial_results[5, n] = xopt[5]                   ;y1
+    
+              trial_results[6, n] = xopt[6]                   ;x2
+              trial_results[7, n] = xopt[7]                   ;y2
+
+           endif  else begin
+
+              trial_results[0, n] = xopt[3]                   ;flux1
+              trial_results[1, n] = xopt[2]                   ;FWHM1
+              trial_results[2, n] = xopt[1]                   ;flux2
+              trial_results[3, n] = xopt[0]                   ;FWHM2
+    
+              trial_results[4, n] = xopt[6]                   ;x1
+              trial_results[5, n] = xopt[7]                   ;y1
+    
+              trial_results[6, n] = xopt[4]                   ;x2
+              trial_results[7, n] = xopt[5]                   ;y2
+           endelse
+         endelse
+       endelse
      
      endfor
 
