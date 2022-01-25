@@ -8,7 +8,7 @@
 ;
 ;-
 ;
-function vis_fwdfit_pso_stix, type, vis, $
+function stx_vis_fwdfit_pso, type, vis, $
   lb = lb, ub = ub, $
   param_opt = param_opt, $
   SwarmSize = SwarmSize, TolFun = TolFun, maxiter = maxiter, $

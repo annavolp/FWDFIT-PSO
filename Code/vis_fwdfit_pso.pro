@@ -13,8 +13,8 @@
 ;   vis_fwdfit_func_pso             [to calculate visibilities for a given set of source parameters]
 ;   pso_func_makealoop              [to calculate loop Fourier trasform]
 ;   swarmintelligence               [to PSO procedure for optimizing the parameters]
-;   vis_fwdfit_pso_src_structure        [to create the source structure]
-;   vis_fwdfit_pso_src_bifurcate        [to create a modified source structure based on bifurcation of input source structure]
+;   vis_fwdfit_pso_src_structure    [to create the source structure]
+;   vis_fwdfit_pso_src_bifurcate    [to create a modified source structure based on bifurcation of input source structure]
 ;   vis_fwdfit_pso_source2map       [to create the map from the optimized parameters]
 ;   vis_fwdfit_pso_vis_pred         [to create the plot of the visibility phase and amplitude fit]
 ;   
@@ -415,6 +415,20 @@ function vis_fwdfit_pso, type, vis, $
       ;iseed=findgen(ntry)+seedstart
 
       for n=0,ntry-1 do begin
+        
+        Nruns = 5.
+
+        lb = [min([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])-30.>0., 0.4*min([srcstr[0].srcflux,srcstr[1].srcflux]),$
+          min([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])-30.>0., 0.4*min([srcstr[0].srcflux,srcstr[1].srcflux]),$
+          min([srcstr[0].srcy-vis[0].xyoffset[1], srcstr[1].srcy-vis[0].xyoffset[1]])-90., min([-srcstr[0].srcx+vis[0].xyoffset[0], -srcstr[1].srcx+vis[0].xyoffset[0]])-90., $
+          min([srcstr[0].srcy-vis[0].xyoffset[1], srcstr[1].srcy-vis[0].xyoffset[1]])-90., min([-srcstr[0].srcx+vis[0].xyoffset[0], -srcstr[1].srcx+vis[0].xyoffset[0]])-90.]
+
+        ub = [max([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])+30., 2.*max([srcstr[0].srcflux,srcstr[1].srcflux]),$
+          max([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])+30., 2.*max([srcstr[0].srcflux,srcstr[1].srcflux]),$
+          max([srcstr[0].srcy-vis[0].xyoffset[1], srcstr[1].srcy-vis[0].xyoffset[1]])+90., max([-srcstr[0].srcx+vis[0].xyoffset[0], -srcstr[1].srcx+vis[0].xyoffset[0]])+90., $
+          max([srcstr[0].srcy-vis[0].xyoffset[1], srcstr[1].srcy-vis[0].xyoffset[1]])+90., max([-srcstr[0].srcx+vis[0].xyoffset[0], -srcstr[1].srcx+vis[0].xyoffset[0]])+90.]
+
+        
         nn = n
         testerror  = RANDOMN(nn+seedstart, nvis)
         vistest    = visobs + testerror * sigamp
@@ -518,7 +532,6 @@ function vis_fwdfit_pso, type, vis, $
     endif
 
   endif
-
 
 
   if type eq 'loop' then begin
