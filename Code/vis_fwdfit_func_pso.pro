@@ -1,5 +1,6 @@
 FUNCTION vis_fwdfit_func_pso, xx, extra = extra
 
+
   type = extra.type
   visobs = extra.visobs
   sigamp = extra.sigamp

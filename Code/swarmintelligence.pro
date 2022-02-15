@@ -6,78 +6,32 @@
 ;   Particle Swarm Optimization for constrained optimization
 ;
 ; CALLING SEQUENCE:
-;   ARRAY = CMREPLICATE(VALUE, DIMS)
+;   swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row
 ;
 ; DESCRIPTION:
+;     The SWARMINTELLIGENCE function initializes a swarm of points, called birds, and updates positions and velocities of the birds 
+;     according to the best location, i.e. the minimum of the objective function. 
+;     For reference see: 
+;     Kennedy and Eberhart, Particle Swarm Optimization, 1995
+;     Mezura-Montes and Coello Coello, Constraint-handling in nature-inspired numerical optimization: Past, present and future, 2011.
 ;
-;   The CMREPLICATE function constructs an array, which is filled with
-;   the specified VALUE template.  CMREPLICATE is very similar to the
-;   built-in IDL function REPLICATE.  However there are two
-;   differences:
-;
-;      * the VALUE can be either scalar or an ARRAY.
-;
-;      * the dimensions are specified as a single vector rather than
-;        individual function arguments.
-;
-;   For example, if VALUE is a 2x2 array, and DIMS is [3,4], then the
-;   resulting array will be 2x2x3x4.
 ;
 ; INPUTS:
+;   obj_fun_name : objective function
+;   lower_bound  : array containing the lower bound values of the variables to optimize
+;   upper_bound  : array containing the upper bound values of the variables to optimize
 ;
-;   VALUE - a scalar or array template of any type, to be replicated.
-;           NOTE: These two calls do not produce the same result:
-;                  ARRAY = CMREPLICATE( 1,  DIMS)
-;                  ARRAY = CMREPLICATE([1], DIMS)
-;           In the first case the output dimensions will be DIMS and
-;           in the second case the output dimensions will be 1xDIMS
-;           (except for structures).  That is, a vector of length 1 is
-;           considered to be different from a scalar.
-;
-;   DIMS - Dimensions of output array (which are combined with the
-;          dimensions of the input VALUE template).  If DIMS is not
-;          specified then VALUE is returned unchanged.
+; KEYWORDS:
+;   n_birds   : number of birds used in PSO (default is 100)
+;   tolerance : tolerance for the stopping criterion (default is 1e-6)
+;   maxiter   : maximum number of iterations (defult is the product between of the numbers of parameters and the number of particles)
+;   extra     : for setting parameters of the objective function
+;   silent    : set to 1 for avoiding the print of the retrieved parameters
 ;
 ; RETURNS:
-;   The resulting replicated array.
-;
-; EXAMPLE:
-;   x = [0,1,2]
-;   help, cmreplicate(x, [2,2])
-;     <Expression>    INT       = Array[3, 2, 2]
-;   Explanation: The 3-vector x is replicated 2x2 times.
-;
-;   x = 5L
-;   help, cmreplicate(x, [2,2])
-;     <Expression>    LONG      = Array[2, 2]
-;   Explanation: The scalar x is replicated 2x2 times.
-;
-; SEE ALSO:
-;
-;   REPLICATE
-;
-; MODIFICATION HISTORY:
-;   Written, CM, 11 Feb 2000
-;   Fixed case when ARRAY is array of structs, CM, 23 Feb 2000
-;   Apparently IDL 5.3 can't return from execute().  Fixed, CM, 24 Feb
-;     2000
-;   Corrected small typos in documentation, CM, 22 Jun 2000
-;   Removed EXECUTE() call by using feature of REBIN() new in IDL 5.6,
-;     (thanks to Dick Jackson) CM, 24 Apr 2009
-;   Remove some legacy code no longer needed after above change
-;     (RETVAL variable no longer defined; thanks to A. van Engelen),
-;     CM, 08 Jul 2009
-;   Change to square bracket array index notation; there were reports
-;     of funny business with parenthesis indexing (thanks Jenny Lovell),
-;     CM, 2012-08-16
-;
-;-
-; Copyright (C) 2000, 2009, 2012, Craig Markwardt
-; This software is provided as is without any warranty whatsoever.
-; Permission to use, copy, modify, and distribute modified or
-; unmodified copies is granted, provided this copyright and disclaimer
-; are included unchanged.
-;-
+; 
+;   The optimized parameters and the minimum value of the objective function.
+
 
 
 function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
@@ -96,49 +50,55 @@ function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
   lower_bound = transpose(cmreplicate(lower_bound_row, n_birds))
   upper_bound = transpose(cmreplicate(upper_bound_row, n_birds))
   
-  birds_pos = lower_bound+randomu(seed,[n_birds,n_variable])*(upper_bound-lower_bound)
-
+  ; create birds position and velocities and evaluate objective funtion
+  birds_pos = lower_bound + randomu(seed,[n_birds,n_variable]) * (upper_bound-lower_bound)
   ones = fltarr(n_birds,1)
-
   birds_vel_aux = ones # reform(min([[upper_bound_row-lower_bound_row],[transpose([n_birds*(fltarr(1,n_variable)+1)])]], dimension=2), [1,n_variable])
-  birds_vel_aux1 = 2.*birds_vel_aux*randomu(seed,[n_variable,n_birds])
-  birds_vel = -birds_vel_aux+birds_vel_aux1
+  birds_vel_aux1 = 2. * birds_vel_aux * randomu(seed,[n_variable,n_birds])
+  birds_vel = -birds_vel_aux + birds_vel_aux1
   
   obj_fun_eval = call_function(obj_fun_name, birds_pos, extra = extra)
 
   birds_best_fun_eval = obj_fun_eval
   birds_best_pos      = birds_pos
 
+  ; identify lowest function value
   birds_global_best_fun_eval = min(obj_fun_eval)
-  birds_best_fun_eval_iter = (fltarr(20,1)+1)*!values.f_nan
+  
+  birds_best_fun_eval_iter   = (fltarr(20,1)+1)*!values.f_nan
   
   inertia_min = 0.1
   inertia_max = 1.1
   intertia_adapt_count = 0.
   inertia_adapt = inertia_max
   
-  
   n_close_birds = max([2.,floor(n_birds/4.)])
   n_close_birds_adapt = n_close_birds
   
   self_behav_const   = 1.49
   social_behav_const = 1.49
-  n_iteration_limit = 20
+  n_iteration_limit  = 20
+  
+  ; run the loop until maximum number of iterations is exceeded
   
   for iter=0,maxiter-1 do begin
-
+    
+    ; create close birds for each bird
     close_birds_ind = fltarr(n_birds, n_close_birds_adapt)
     close_birds_ind[*,0] = indgen(n_birds)
     
     for jj = 0,n_birds-1 do begin
+      
       x_p = LINDGEN(n_birds-1)
       y_p = RANDOMU(dseed, n_birds-1)
       z = x_p[SORT(y_p)]
       close_birds = z[0:n_close_birds_adapt-2]
       close_birds[where([close_birds GE jj])] += 1.
       close_birds_ind[jj,1:-1] = close_birds
+      
     endfor
     
+   ; find best close bird 
    aux_vect = birds_best_fun_eval[close_birds_ind]
    dummy = min(aux_vect,best_birds_fun_eval_row, dimension=2)
    best_birds_fun_eval_row = ARRAY_INDICES(aux_vect, best_birds_fun_eval_row)
@@ -147,7 +107,8 @@ function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
  
    randSelf = randomu(seed,[n_birds,n_variable])
    randSocial = randomu(seed,[n_birds,n_variable])
-        
+   
+   ; Update velocities and positions (upper and lower bound check)
    birds_new_vel = inertia_adapt * birds_vel + $
                   self_behav_const * randSelf * (birds_best_pos - birds_pos) + $
                   social_behav_const * randSocial * (birds_best_pos[close_birds_ind[(best_birds_fun_eval_row) * n_birds + findgen(n_birds)],*] - birds_pos)
@@ -164,20 +125,18 @@ function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
    swarm_new[upper_bound_ind]= upper_bound[upper_bound_ind]
    birds_vel[upper_bound_ind] = 0.
 
+   birds_pos = swarm_new
     
-    birds_pos = swarm_new
+   obj_fun_eval = call_function(obj_fun_name, birds_pos, extra = extra)
     
-    obj_fun_eval = call_function(obj_fun_name, birds_pos, extra = extra)
-    
-    
-    
-    ind_best = where(obj_fun_eval LT transpose(birds_best_fun_eval))
-    birds_best_fun_eval[ind_best] = obj_fun_eval[ind_best]
-    birds_best_pos[ind_best,*]    = birds_pos[ind_best,*]
+   ind_best = where(obj_fun_eval LT transpose(birds_best_fun_eval))
+   birds_best_fun_eval[ind_best] = obj_fun_eval[ind_best]
+   birds_best_pos[ind_best,*]    = birds_pos[ind_best,*]
 
-    birds_best_fun_eval_iter[(iter mod n_iteration_limit)] = min(birds_best_fun_eval)
+   birds_best_fun_eval_iter[(iter mod n_iteration_limit)] = min(birds_best_fun_eval)
      
-    swarm_new_best = min(birds_best_fun_eval)
+   ; remember improvement in best_fun_eval
+   swarm_new_best = min(birds_best_fun_eval)
    
    if (finite(swarm_new_best)) and (swarm_new_best LT birds_global_best_fun_eval) then begin
       birds_global_best_fun_eval = swarm_new_best 
@@ -188,6 +147,7 @@ function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
       n_close_birds_adapt  = min([n_birds, n_close_birds_adapt+n_close_birds])
     endelse  
     
+    ; update inertia 
     if intertia_adapt_count LT 2. then begin
     inertia_adapt = max([inertia_min, min([inertia_max, 2 * inertia_adapt])])
     endif else begin
@@ -198,6 +158,7 @@ function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
      
     iter_ind = (iter mod n_iteration_limit) + 1
 
+    ; check if any stopping criteria is satisfied
     if iter GT n_iteration_limit then begin
        if iter_ind EQ n_iteration_limit then begin
           birds_max_best_fun_eval_iter = birds_best_fun_eval_iter[0]
