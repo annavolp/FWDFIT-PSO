@@ -9,9 +9,9 @@
 ;-
 ;
 function stx_vis_fwdfit_pso, type, vis, $
-  lb = lb, ub = ub, $
+  lower_bound = lower_bound, upper_bound = upper_bound, $
   param_opt = param_opt, $
-  SwarmSize = SwarmSize, TolFun = TolFun, maxiter = maxiter, $
+  n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
   uncertainty = uncertainty, $
   imsize=imsize, pixel=pixel, $
   silent = silent, $
@@ -20,6 +20,7 @@ function stx_vis_fwdfit_pso, type, vis, $
   seedstart = seedstart
   
   ; stix view
+  
   this_vis = vis
   this_vis.xyoffset[0] = vis.xyoffset[1]
   this_vis.xyoffset[1] = - vis.xyoffset[0]
@@ -233,9 +234,9 @@ function stx_vis_fwdfit_pso, type, vis, $
   
   
   param_out = vis_fwdfit_pso(type, this_vis, $
-    lb = lb, ub = ub, $
+    lower_bound = lower_bound, upper_bound = upper_bound, $
     param_opt = this_param_opt, $
-    SwarmSize = SwarmSize, TolFun = TolFun, maxiter = maxiter, $
+    n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
     uncertainty = uncertainty, $
     imsize=imsize, pixel=pixel, $
     silent = silent, $
