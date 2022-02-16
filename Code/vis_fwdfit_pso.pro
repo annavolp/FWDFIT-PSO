@@ -138,7 +138,7 @@ function vis_fwdfit_pso, type, vis, $
     u: vis.u, $
     v: vis.v, $
     n_free: nvis - Nvars, $    ;n_free: degrees of freedom (difference between the number of visibility amplitudes
-    ;and the number of parameters of the source shape)
+                               ;and the number of parameters of the source shape)
     param_opt: param_opt, $
     mapcenter : vis.xyoffset }
 

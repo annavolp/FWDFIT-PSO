@@ -275,7 +275,7 @@ function stx_vis_fwdfit_pso, type, vis, $
       srcstr[n].srcx        = - x_new + vis[0].xyoffset[0]
       srcstr[n].srcy        = y_new + vis[0].xyoffset[1]
 
-      srcstr[n].SRCPA += 90.
+      if (srcstr[n].srctype eq 'ellipse') or (srcstr[n].srctype eq 'loop') then srcstr[n].srcpa += 90.
       
       temp        = [ srcstr[n].srcflux,srcstr[n].srcfwhm_max,  srcstr[n].srcfwhm_min, $
                       srcstr[n].srcpa, srcstr[n].srcx, srcstr[n].srcy, srcstr[n].loop_angle]
