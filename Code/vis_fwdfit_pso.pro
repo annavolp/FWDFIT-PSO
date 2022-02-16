@@ -418,12 +418,12 @@ function vis_fwdfit_pso, type, vis, $
       Nruns = 5.
 
       lower_bound = [min([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])-30.>0., 0.4*min([srcstr[0].srcflux,srcstr[1].srcflux]),$
-            min([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])-30.>0., 0.4*min([srcstr[0].srcflux,srcstr[1].srcflux]),$
-            -100., -100., -100., -100.]
+                     min([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])-30.>0., 0.4*min([srcstr[0].srcflux,srcstr[1].srcflux]),$
+                     -100., -100., -100., -100.]
 
       upper_bound = [max([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])+30., 2.*max([srcstr[0].srcflux,srcstr[1].srcflux]),$
-            max([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])+30., 2.*max([srcstr[0].srcflux,srcstr[1].srcflux]),$
-            100., 100., 100., 100.]
+                     max([srcstr[0].srcfwhm_max, srcstr[1].srcfwhm_max])+30., 2.*max([srcstr[0].srcflux,srcstr[1].srcflux]),$
+                     100., 100., 100., 100.]
       
 
       for n=0,ntry-1 do begin
@@ -454,71 +454,48 @@ function vis_fwdfit_pso, type, vis, $
 
         dummy = min(f,location)
         xopt  = xx_opt(location,*)
-
-
-       ;top–left footpoint is referred to as first source
-       if (xopt[5] - xopt[7]) ge 3. then begin
-
-          trial_results[0, n] = xopt[1]                   ;flux1
-          trial_results[1, n] = xopt[0]                   ;FWHM1
-          trial_results[2, n] = xopt[3]                   ;flux2
-          trial_results[3, n] = xopt[2]                   ;FWHM2
-
-          trial_results[4, n] = xopt[4]                   ;x1
-          trial_results[5, n] = xopt[5]                   ;y1
-
-          trial_results[6, n] = xopt[6]                   ;x2
-          trial_results[7, n] = xopt[7]                   ;y2
-
-       endif else begin
-         if (xopt[7] - xopt[5]) ge 3. then begin
-
-          trial_results[0, n] = xopt[3]                   ;flux1
-          trial_results[1, n] = xopt[2]                   ;FWHM1
-          trial_results[2, n] = xopt[1]                   ;flux2
-          trial_results[3, n] = xopt[0]                   ;FWHM2
-
-          trial_results[4, n] = xopt[6]                   ;x1
-          trial_results[5, n] = xopt[7]                   ;y1
-
-          trial_results[6, n] = xopt[4]                   ;x2
-          trial_results[7, n] = xopt[5]                   ;y2
-
+        
+        d_45_0 = sqrt((xopt[4] + vis[0].xyoffset[0] - srcstr[0].srcx )^2. + (xopt[5] + vis[0].xyoffset[1] - srcstr[0].srcy )^2.)
+        d_45_1 = sqrt((xopt[4] + vis[0].xyoffset[0] - srcstr[1].srcx )^2. + (xopt[5] + vis[0].xyoffset[1] - srcstr[1].srcy )^2.)
+        d_67_0 = sqrt((xopt[6] + vis[0].xyoffset[0] - srcstr[0].srcx )^2. + (xopt[7] + vis[0].xyoffset[1] - srcstr[0].srcy )^2.)
+        d_67_1 = sqrt((xopt[6] + vis[0].xyoffset[0] - srcstr[1].srcx )^2. + (xopt[7] + vis[0].xyoffset[1] - srcstr[1].srcy )^2.) 
+        
+        dist_min = min([d_45_0, d_45_1, d_67_0, d_67_1], dist_loc)
+        
+     
+; (4;5) closest to first source or (6;7) closest to second source
+         if (dist_loc eq 0) or (dist_loc eq 3) then begin  
+            
+             trial_results[0, n] = xopt[1]                   ;flux1
+             trial_results[1, n] = xopt[0]                   ;FWHM1
+             trial_results[2, n] = xopt[3]                   ;flux2
+             trial_results[3, n] = xopt[2]                   ;FWHM2
+   
+             trial_results[4, n] = xopt[4]                   ;x1
+             trial_results[5, n] = xopt[5]                   ;y1
+   
+             trial_results[6, n] = xopt[6]                   ;x2
+             trial_results[7, n] = xopt[7]                   ;y2
+            
          endif else begin
-           if xopt[4] ge xopt[6] then begin
-
-              trial_results[0, n] = xopt[1]                   ;flux1
-              trial_results[1, n] = xopt[0]                   ;FWHM1
-              trial_results[2, n] = xopt[3]                   ;flux2
-              trial_results[3, n] = xopt[2]                   ;FWHM2
-    
-              trial_results[4, n] = xopt[4]                   ;x1
-              trial_results[5, n] = xopt[5]                   ;y1
-    
-              trial_results[6, n] = xopt[6]                   ;x2
-              trial_results[7, n] = xopt[7]                   ;y2
-
-           endif  else begin
-
-              trial_results[0, n] = xopt[3]                   ;flux1
-              trial_results[1, n] = xopt[2]                   ;FWHM1
-              trial_results[2, n] = xopt[1]                   ;flux2
-              trial_results[3, n] = xopt[0]                   ;FWHM2
-    
-              trial_results[4, n] = xopt[6]                   ;x1
-              trial_results[5, n] = xopt[7]                   ;y1
-    
-              trial_results[6, n] = xopt[4]                   ;x2
-              trial_results[7, n] = xopt[5]                   ;y2
-           endelse
+          
+             trial_results[0, n] = xopt[3]                   ;flux1
+             trial_results[1, n] = xopt[2]                   ;FWHM1
+             trial_results[2, n] = xopt[1]                   ;flux2
+             trial_results[3, n] = xopt[0]                   ;FWHM2
+   
+             trial_results[4, n] = xopt[6]                   ;x1
+             trial_results[5, n] = xopt[7]                   ;y1
+   
+             trial_results[6, n] = xopt[4]                   ;x2
+             trial_results[7, n] = xopt[5]                   ;y2
+          
          endelse
-       endelse
-     
-     endfor
+    
+    endfor
      
 
-
-      fitsigmas[0].srcflux     = stddev(trial_results[0,*])
+          fitsigmas[0].srcflux     = stddev(trial_results[0,*])
       fitsigmas[0].srcfwhm_max = stddev(trial_results[1,*])
       fitsigmas[0].srcfwhm_min = stddev(trial_results[1,*])
       fitsigmas[0].srcx        = stddev(trial_results[4,*])
