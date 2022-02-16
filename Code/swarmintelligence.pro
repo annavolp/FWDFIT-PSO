@@ -6,7 +6,7 @@
 ;   Particle Swarm Optimization for constrained optimization
 ;
 ; CALLING SEQUENCE:
-;   swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row
+;   swarmintelligence(obj_fun_name, lower_bound_row, upper_bound_row)
 ;
 ; DESCRIPTION:
 ;     The SWARMINTELLIGENCE function initializes a swarm of points, called birds, and updates positions and velocities of the birds 
@@ -17,9 +17,9 @@
 ;
 ;
 ; INPUTS:
-;   obj_fun_name : objective function
-;   lower_bound  : array containing the lower bound values of the variables to optimize
-;   upper_bound  : array containing the upper bound values of the variables to optimize
+;   obj_fun_name     : objective function
+;   lower_bound_row  : array containing the lower bound values of the variables to optimize
+;   upper_bound_row  : array containing the upper bound values of the variables to optimize
 ;
 ; KEYWORDS:
 ;   n_birds   : number of birds used in PSO (default is 100)
@@ -28,11 +28,10 @@
 ;   extra     : for setting parameters of the objective function
 ;   silent    : set to 1 for avoiding the print of the retrieved parameters
 ;
-; RETURNS:
-; 
+; OUTPUT:
 ;   The optimized parameters and the minimum value of the objective function.
-
-
+;
+; HISTORY: March 2021, Perracchione E., created
 
 function swarmintelligence, obj_fun_name, lower_bound_row, upper_bound_row, $
                             n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, extra = extra, silent = silent 
