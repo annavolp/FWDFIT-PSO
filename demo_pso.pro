@@ -1,19 +1,37 @@
-folder = '/Users/admin/Documents/GitHub/FWDFIT-PSO/'
-add_path, folder + 'Code'
+add_path, 'C:\Users\volpa\Documents\GitHub\FWDFIT-PSO\Code'
 
 
-data_folder = getenv('SSW_STIX') + '/idl/processing/imaging/data/'
+;data_folder = getenv('SSW_STIX') + '/idl/processing/imaging/data/'
+data_folder_stix = 'C:\Users\volpa\Desktop\Dottorato\PSO 8_12\'
 
 ;;;;;;;;;;;; LOAD DATA
 
-;;;;; June 7 2021 - 21:41
+;**************************************************************************************
+;**************************************** STIX ****************************************
+;**************************************************************************************
 
-path_sci_file = data_folder + 'solo_L1_stix-sci-xray-l1-1178428688_20200607T213708-20200607T215208_V01.fits' ; Path of the science L1 fits file
-path_bkg_file = data_folder + 'solo_L1_stix-sci-xray-l1-1178451984_20200607T225959-20200607T235900_V01.fits' ; Path of the background L1 fits file
-time_range    = ['7-Jun-2020 21:39:00', '7-Jun-2020 21:42:49'] ; Time range to consider
-energy_range  = [6,10]       ; Energy range to consider (keV)
-xy_flare      = [-1600., -800.]  ; CFL solution (heliocentric, north up). Needed for the visibility phase calibration
-mapcenter     = [-1650., -750.] ; Coordinates of the center of the map to reconstruct (heliocentric, north up)
+;;;;; ******************************* May 7 2021 - 18:52 *********************************
+path_sci_file = data_folder_stix + 'solo_L1A_stix-sci-xray-l1-2105070034_20210507T184238-20210507T190900_011203_V01.fits'
+path_bkg_file = data_folder_stix + 'solo_L1A_stix-sci-xray-l1-2105080012_20210508T020005-20210508T034005_010936_V01.fits'
+time_range = ['7-May-2021 18:51:00', '7-May-2021 18:53:40']
+xy_flare   = [325., 261.] ; Adapted from imaging
+mapcenter  = xy_flare
+;;;;; Thermal range
+energy_range = [6,10]
+;;;;;; Non - Thermal range
+;energy_range = [22,50]
+
+
+;;;;; ******************************* August 26 2021 - 23:19  ****************************
+;path_sci_file = data_folder_stix+ 'solo_L1A_stix-sci-xray-l1-2108260030_20210826T231549-20210826T232115_013330_V01.fits'; Path of the science L1 fits file
+;path_bkg_file = data_folder_stix + 'solo_L1A_stix-sci-xray-l1-2108200018_20210820T012017-20210820T025617_012845_V01.fits'
+;time_range = ['26-Aug-2021 23:18:00', '26-Aug-2021 23:20:00'] ; Time range to consider
+;xy_flare = [670., -1185.]
+;mapcenter = xy_flare  ; Coordinates of the center of the map to reconstruct (heliocentric, north up)
+;;;;;;;;; Thermal range
+;;energy_range = [6,10]
+;;;;;;;;; Non-thermal range
+;energy_range = [15,25]    ; Energy range to consider (keV)
 
 ;**********************************************************************************************************
 
@@ -32,9 +50,10 @@ pixel     = [1.,1.]       ; pixel size in arcsec
 ;***************************************** PSO *************************************************
 
 ; Select the shape:
-; - 'circle': circular Gaussian source
+; - 'circle' : circular Gaussian source
 ; - 'ellipse': elliptical Gaussian source
-; - 'multi': double circular Gaussian source
+; - 'multi'  : double circular Gaussian source
+; - 'loop'   : single curved elliptical gaussian
 
 type='ellipse'
 
@@ -45,12 +64,58 @@ type='ellipse'
 ; 3) 'fitsigmasout_pso' is a structure containing the uncertainty on the optimized parameters
 ; 4) set /uncertainty for computing an estimate of the uncertainty on the parameters
 
-vis_fwdfit_pso_map = vis_fwdfit_pso_stix(type, vis,  param_opt=param_opt, imsize=imsize, pixel=pixel, $
-                                        srcstr = srcstrout_pso, fitsigmas=fitsigmasout_pso, /uncertainty)
-                                        
+vis_fwdfit_pso_map = stx_vis_fwdfit_pso(type, vis,  param_opt=param_opt, imsize=imsize, pixel=pixel, $
+  srcstr = srcstrout_pso, fitsigmas=fitsigmasout_pso, /uncertainty)                                        
+                                   
 loadct, 5
 window, 0
 cleanplot
 plot_map, vis_fwdfit_pso_map, /cbar
+
+stop
+
+;**************************************************************************************
+;*************************************** RHESSI ***************************************
+;**************************************************************************************
+search_network, /enable
+imsize = [129 , 129]
+pixel = [1.0000, 1.0000]
+obj = hsi_image()
+
+obj-> set, cbe_normalize= 1
+obj-> set, snr_chk= 1
+obj-> set, snr_thresh= 4.00000
+obj-> set, mpat_coord= 'CART'
+obj-> set, image_dim= imsize
+obj-> set, pixel_size= pixel
+obj-> set, im_time_interval= ['13-Feb-2002 12:29:40.200', '13-Feb-2002 12:31:22.800']
+obj-> set, use_flux_var= 0L
+obj-> set, use_phz_stacker= 1L
+obj-> set, xyoffset= [-902.999, -374.331]
+obj-> set, im_energy_binning= [6.00000, 12.0000]
+obj-> set, time_bin_def= [1.00000, 2.00000, 4.00000, 8.00000, 8.00000, 16.0000, 32.0000, $
+  64.0000, 128.000]
+obj-> set, time_bin_min= 256L
+obj-> set, det_index_mask= [0B, 0B, 1B, 1B, 1B, 1B, 1B, 1B, 1B]
+obj-> set, vf_loop= 1
+
+vo = obj->get(/obj, class='hsi_visibility') ;salvo vis
+vis = vo->getdata()
+
+type='loop'
+param_out = vis_fwdfit_pso(type, vis)
+srcstr = param_out.srcstr
+vis_fwdfit_pso_map = vis_FWDFIT_PSO_SOURCE2MAP(srcstr, type=type, pixel=pixel, imsize=imsize, xyoffset=vis[0].xyoffset)
+vis_fwdfit_pso_map=make_map(vis_fwdfit_pso_map)
+
+loadct,5
+window,1
+plot_map, vis_fwdfit_pso_map, /limb, grid_spacing=5.
+
+
+
+
+
+
 
 end

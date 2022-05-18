@@ -114,6 +114,7 @@ function stx_vis_fwdfit_pso, type, vis, $
       ON_IOError, y_stix_e
       ; Cause type conversion error.
       if flag then this_param_opt[5] = string(- double(param_opt[4]))
+      
     end
 
     'multi': begin
@@ -251,9 +252,10 @@ function stx_vis_fwdfit_pso, type, vis, $
   fwdfit_pso_map.dy = pixel[1]
   fwdfit_pso_map.xc = vis[0].xyoffset[0]
   fwdfit_pso_map.yc = vis[0].xyoffset[1]
-  this_time_range   = stx_time2any(vis[0].time_range,/vms)
-  fwdfit_pso_map.time = anytim((anytim(this_time_range[1])+anytim(this_time_range[0]))/2.,/vms)
-  fwdfit_pso_map.DUR  = anytim(this_time_range[1])-anytim(this_time_range[0])
+  ;this_time_range   = stx_time2any(vis[0].time_range,/vms)
+  ;fwdfit_pso_map.time = anytim((anytim(this_time_range[1])+anytim(this_time_range[0]))/2.,/vms)
+  ;fwdfit_pso_map.DUR  = anytim(this_time_range[1])-anytim(this_time_range[0])
+  
   ;eventually fill in radial distance etc
   add_prop,fwdfit_pso_map,rsun=0.
   add_prop,fwdfit_pso_map,B0=0.
@@ -275,7 +277,7 @@ function stx_vis_fwdfit_pso, type, vis, $
       srcstr[n].srcx        = - x_new + vis[0].xyoffset[0]
       srcstr[n].srcy        = y_new + vis[0].xyoffset[1]
 
-      if (srcstr[n].srctype eq 'ellipse') or (srcstr[n].srctype eq 'loop') then srcstr[n].srcpa += 90.
+      srcstr[n].SRCPA += 90.
       
       temp        = [ srcstr[n].srcflux,srcstr[n].srcfwhm_max,  srcstr[n].srcfwhm_min, $
                       srcstr[n].srcpa, srcstr[n].srcx, srcstr[n].srcy, srcstr[n].loop_angle]
