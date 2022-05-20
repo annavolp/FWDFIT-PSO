@@ -41,20 +41,23 @@
 ;   PIXEL       : array containing the pixel size (in arcsec) of the image to reconstruct
 ;                 (default is [1., 1.])
 ;   SILENT      : set to 1 for avoiding the print of the retrieved parameters
+;   SEEDSTART   : costant used to initialize the random perturbation of visibilities when uncertainty is computed
+;                 (default is fix(randomu(seed) * 100))
+;
 ;
 ; OUTPUTS:
-;   fit parameters and uncertaintly  (srcin and fitsigams)
+;   fit parameters and uncertaintly  (srcstr and fitsigams)
 ;   reduced chi^2 (redchisq)
 ;   image map (output map structure has north up)
 
 
 function stx_vis_fwdfit_pso, configuration, vis, $
-                             srcin=srcin, fitsigmas =fitsigmas, redchisq = redchisq, $
+                             srcin=srcin, $
                              n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
                              uncertainty = uncertainty, $
                              imsize=imsize, pixel=pixel, $
                              silent = silent, $
-                             srcstr = srcstr, $
+                             srcstr = srcstr,fitsigmas =fitsigmas, redchisq = redchisq, $
                              seedstart = seedstart
 
 

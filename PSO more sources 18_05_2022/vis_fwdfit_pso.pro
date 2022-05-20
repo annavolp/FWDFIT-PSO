@@ -32,28 +32,19 @@
 ;
 ;
 ; KEYWORDS:
-;   SRCIN     : struct containing for each source the parameters to optimize and those fixed, upper and lower bound of the variables.
-;               to create the structure srcin:
-;                     srcin = VIS_FWDFIT_PSO_MULTIPLE_SRC_CREATE(vis, configuration) 
-;                 
-;               If not entered, default values are used (see:
-;                                                             - vis_fwdfit_pso_circle_struct_define for the circle                                                         
-;                                                             - vis_fwdfit_pso_ellipse_struct_define for the ellipse
-;                                                             - vis_fwdfit_pso_loop_struct_define for the loop)
-;
-;               .param_opt  : struct containing the values of the parameters to keep fixed during the optimization.
+;   PARAM_OPT  : array containing the values of the parameters to keep fixed during the optimization.
 ;                             If an entry of 'param_opt' is set equal to 'fit', then the corresponding variable is optimized.
 ;                             Otherwise, its value is kept fixed equal to the entry of 'param_opt'
-;               .lower_bound: struct containing the lower bound values of the variables to optimize.
-;               .upper_bound: struct containing the upper bound values of the variables to optimize.
+;   LOWER_BOUND: array containing the lower bound values of the variables to optimize.
+;   UPPER_BOUND: array containing the upper bound values of the variables to optimize.
 ;
-;               For different shapes we have:
-;                   - 'circle'  : param_opt, lower_bound, upper_bound = [flux, x location, y location, FWHM]
-;                   - 'ellipse' : param_opt = [flux, FWHM max, FWHM min, alpha, x location, y location]
-;                                 lower_bound, upper_bound = [flux, FWHM, ecc * cos(alpha), ecc * sin(alpha), x location, y location]
+;     For different shapes we have:
+;        - 'circle'  : param_opt, lower_bound, upper_bound = [flux, x location, y location, FWHM]
+;        - 'ellipse' : param_opt = [flux, x location, y location, FWHM max, FWHM min, alpha]
+;                                 lower_bound, upper_bound = [flux, x location, y location, FWHM, ecc * cos(alpha), ecc * sin(alpha)]
 ;                                 'ecc' is the eccentricity of the ellipse and 'alpha' is the orientation angle
-;                   - 'loop'    : param_opt = [flux, FWHM max, FWHM min, alpha, x location, y location, loop_angle]
-;                                 lower_bound, upper_bound = [flux, FWHM, ecc * cos(alpha), ecc * sin(alpha), x location, y location, loop_angle]
+;        - 'loop'    : param_opt = [flux, x location, y location, FWHM max, FWHM min, alpha, loop_angle]
+;                                 lower_bound, upper_bound = [flux, x location, y location, FWHM, ecc * cos(alpha), ecc * sin(alpha), loop_angle]
 ;
 ;
 ;   N_BIRDS     : number of particles used in PSO 
@@ -69,6 +60,8 @@
 ;   PIXEL       : array containing the pixel size (in arcsec) of the image to reconstruct
 ;                 (default is [1., 1.])
 ;   SILENT      : set to 1 for avoiding the print of the retrieved parameters
+;   SEEDSTART   : costant used to initialize the random perturbation of visibilities when uncertainty is computed
+;                 (default is fix(randomu(seed) * 100))
 ;
 ;
 ;
@@ -79,7 +72,7 @@
 ; OUTPUTS:
 ;   fit parameters and uncertaintly
 ;   reduced chi^2 (redchisq)
-;   image map (output map structure has north up)   
+;   image map 
 ;   
 ;
 ; HISTORY: April 2022, Volpara A. created
@@ -89,8 +82,7 @@
 
 
 function vis_fwdfit_pso, configuration, vis, $
-                         lower_bound = lower_bound, upper_bound = upper_bound, $
-                         param_opt = param_opt, $
+                         lower_bound = lower_bound, upper_bound = upper_bound, param_opt = param_opt, $
                          n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
                          uncertainty = uncertainty, $
                          imsize=imsize, pixel=pixel, $
@@ -234,6 +226,8 @@ if keyword_set(uncertainty) then begin
 ;  Nruns = 20.
   check = 1
   vect_check = fltarr(ntry)
+;  LOWER_BOUND_UNC=LOWER_BOUND
+;  UPPER_BOUND_UNC=UPPER_BOUND
   
 ; lower bound, upper_bound
   if n_elements(configuration) eq 1 then begin
@@ -529,7 +523,7 @@ if keyword_set(uncertainty) then begin
       endfor
       if  min(dist__circle) lt min(matrix_dist_circle) then begin
         check +=1
-        vect_check[n] = 1
+        vect_check[n] += 1
       endif
       
     endif
@@ -551,7 +545,7 @@ if keyword_set(uncertainty) then begin
       endfor
       if  min(dist__ellipse) lt min(matrix_dist_ellipse) then begin
         check +=1
-        vect_check[n] = 1
+        vect_check[n] += 1
       endif
 
     endif
@@ -567,7 +561,7 @@ if keyword_set(uncertainty) then begin
       endfor
       if  min(dist__loop) lt min(matrix_dist_loop) then begin
         check +=1
-        vect_check[n] = 1
+        vect_check[n] += 1
       endif
 
     endif
@@ -575,63 +569,73 @@ if keyword_set(uncertainty) then begin
         
   endfor
   
-  swap_elements = where(vect_check eq 1, n_swap)
+  swap_elements = where(vect_check ge 2., n_swap)
   if ((n_elements(swap_elements) le 2) and (n_swap gt 0)) then begin
     dims = size(trial_results, /dimensions)
     trial_results = trial_results[*,where(~Histogram(swap_elements, min=0, max=dims[1]-1), /null)]
-  endif
-  
-  if n_circle gt 0 then begin
-    for i=0, n_circle-1 do begin
-      fitsigmas[i].srcflux = stddev(trial_results[4*i,*])
-      fitsigmas[i].srcx    = stddev(trial_results[4*i+1,*])
-      fitsigmas[i].srcy    = stddev(trial_results[4*i+2,*])
-      fitsigmas[i].srcfwhm_max = stddev(trial_results[4*i+3,*])
-      fitsigmas[i].srcfwhm_min = stddev(trial_results[4*i+3,*])
-    endfor
-  endif
-  
-  
-  if n_ellipse gt 0 then begin
-    for i=0, n_ellipse-1 do begin
 
-      fitsigmas[n_circle+i].srcflux        = stddev(trial_results[n_circle*4+6*i, *])
-      fitsigmas[n_circle+i].srcfwhm_max    = stddev(trial_results[n_circle*4+6*i+3, *])
-      fitsigmas[n_circle+i].srcfwhm_min    = stddev(trial_results[n_circle*4+6*i+4, *])
-      avsrcpa                  = ATAN(TOTAL(SIN(trial_results[4*n_circle+6*i+5, *] * !DTOR)), $
-                                      TOTAL(COS(trial_results[4*n_circle+6*i+5, *] * !DTOR))) * !RADEG
-      groupedpa                = (810 + avsrcpa - trial_results[4*n_circle+6*i+5, *]) MOD 180.
-      fitsigmas[n_circle+i].srcpa          = STDDEV(groupedpa)
-      fitsigmas[n_circle+i].srcx           = stddev(trial_results[4*n_circle+6*i+1,*])
-      fitsigmas[n_circle+i].srcy           = stddev(trial_results[4*n_circle+6*i+2,*])
-      
+    if n_circle gt 0 then begin
+      for i=0, n_circle-1 do begin
+        fitsigmas[i].srcflux = stddev(trial_results[4*i,*])
+        fitsigmas[i].srcx    = stddev(trial_results[4*i+1,*])
+        fitsigmas[i].srcy    = stddev(trial_results[4*i+2,*])
+        fitsigmas[i].srcfwhm_max = stddev(trial_results[4*i+3,*])
+        fitsigmas[i].srcfwhm_min = stddev(trial_results[4*i+3,*])
+      endfor
+    endif
+    
+    
+    if n_ellipse gt 0 then begin
+      for i=0, n_ellipse-1 do begin
+        fitsigmas[n_circle+i].srcflux        = stddev(trial_results[n_circle*4+6*i, *])
+        fitsigmas[n_circle+i].srcfwhm_max    = stddev(trial_results[n_circle*4+6*i+3, *])
+        fitsigmas[n_circle+i].srcfwhm_min    = stddev(trial_results[n_circle*4+6*i+4, *])
+        avsrcpa                  = ATAN(TOTAL(SIN(trial_results[4*n_circle+6*i+5, *] * !DTOR)), $
+                                        TOTAL(COS(trial_results[4*n_circle+6*i+5, *] * !DTOR))) * !RADEG
+        groupedpa                = (810 + avsrcpa - trial_results[4*n_circle+6*i+5, *]) MOD 180.
+        fitsigmas[n_circle+i].srcpa          = STDDEV(groupedpa)
+        fitsigmas[n_circle+i].srcx           = stddev(trial_results[4*n_circle+6*i+1,*])
+        fitsigmas[n_circle+i].srcy           = stddev(trial_results[4*n_circle+6*i+2,*])
+      endfor
+    endif
+     
+     
+    if n_loop gt 0 then begin
+      for i=0, n_loop-1 do begin
+        fitsigmas[n_circle+n_ellipse+i].srcflux        = stddev(trial_results[n_circle*4+6*n_ellipse+7*i, *])
+        fitsigmas[n_circle+n_ellipse+i].srcfwhm_max    = stddev(trial_results[n_circle*4+6*n_ellipse+7*i+3, *])
+        fitsigmas[n_circle+n_ellipse+i].srcfwhm_min    = stddev(trial_results[n_circle*4+6*n_ellipse+7*i+4, *])
+        avsrcpa                  = ATAN(TOTAL(SIN(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR)), $
+                                        TOTAL(COS(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR))) * !RADEG
+        groupedpa                = (810 + avsrcpa - trial_results[4*n_circle+6*n_ellipse+7*i+5, *]) MOD 180.
+        fitsigmas[n_circle+n_ellipse+i].srcpa          = STDDEV(groupedpa)
+        fitsigmas[n_circle+n_ellipse+i].srcx           = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+1,*])
+        fitsigmas[n_circle+n_ellipse+i].srcy           = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+2,*])
+        fitsigmas[n_circle+n_ellipse+i].loop_angle     = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+6,*])
+      endfor
+    endif  
+    
+  endif else begin
+    print, ' '
+    print, ' '
+    print, 'Warning: this configuration is not stable.'
+    print, 'Try to use a simpler configuration.'
+    print, ' '
+    print, ' '
+    
+    for kk = 0, n_elements(configuration)-1 do begin
+        fitsigmas[kk].srcflux     = !values.f_nan
+        fitsigmas[kk].srcfwhm_max = !values.f_nan
+        fitsigmas[kk].srcfwhm_min = !values.f_nan
+        fitsigmas[kk].srcpa       = !values.f_nan
+        fitsigmas[kk].srcx        = !values.f_nan
+        fitsigmas[kk].srcy        = !values.f_nan
+        fitsigmas[kk].loop_angle  = !values.f_nan
+        
     endfor
-  endif
-   
-  if n_loop gt 0 then begin
-    for i=0, n_loop-1 do begin
-      
-      fitsigmas[n_circle+n_ellipse+i].srcflux        = stddev(trial_results[n_circle*4+6*n_ellipse+7*i, *])
-      fitsigmas[n_circle+n_ellipse+i].srcfwhm_max    = stddev(trial_results[n_circle*4+6*n_ellipse+7*i+3, *])
-      fitsigmas[n_circle+n_ellipse+i].srcfwhm_min    = stddev(trial_results[n_circle*4+6*n_ellipse+7*i+4, *])
-      avsrcpa                  = ATAN(TOTAL(SIN(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR)), $
-                                      TOTAL(COS(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR))) * !RADEG
-      groupedpa                = (810 + avsrcpa - trial_results[4*n_circle+6*n_ellipse+7*i+5, *]) MOD 180.
-      fitsigmas[n_circle+n_ellipse+i].srcpa          = STDDEV(groupedpa)
-      fitsigmas[n_circle+n_ellipse+i].srcx           = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+1,*])
-      fitsigmas[n_circle+n_ellipse+i].srcy           = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+2,*])
-      fitsigmas[n_circle+n_ellipse+i].loop_angle     = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+6,*])
-      
-    endfor
-  endif   
+    
+  endelse
 
-  if check gt 2 then begin
-    print, ' '
-    print, ' '
-    print, 'Warning: this configuration is not stable'
-    print, ' '
-    print, ' ' 
-  endif
   
   
 endif

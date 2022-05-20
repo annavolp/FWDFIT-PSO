@@ -1,19 +1,23 @@
-function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, configuration, pixel=pixel, imsize=mapsize, xyoffset=xyoffset
-
-; creates the image corresponding to the input vis_fwdfit_pso configuration and optimized parameters.
-; 
+; NAME:
+;   vis_fwdfit_pso_source2map
+;
+; PURPOSE:
+;    create the image corresponding to the input vis_fwdfit_pso configuration and optimized parameters.
+;
 ; INPUTS:
-;   srcstr: the structure containing the optimized parameters
-;   configuration: array containing parametric shapes to use for the forward fitting method
-;   
+;   SRCSTR: the structure containing the optimized parameters
+;   CONFIGURATION: array containing parametric shapes to use for the forward fitting method
+;
 ; KEYWORDS:
 ;   IMSIZE      : array containing the size (number of pixels) of the image to reconstruct
 ;                 (default is [128., 128.])
 ;   PIXEL       : array containing the pixel size (in arcsec) of the image to reconstruct
 ;                 (default is [1., 1.])
-;   XYOFFSET    : array containing the x and y offset
+;   XYOFFSET    : array containing the center of the map
 ;                 (default is [0., 0.])
 
+
+function vis_FWDFIT_PSO_SOURCE2MAP, srcstr, configuration, pixel=pixel, imsize=mapsize, xyoffset=xyoffset
 
   default, pixel, [1., 1.]
   default, mapsize, [128, 128]

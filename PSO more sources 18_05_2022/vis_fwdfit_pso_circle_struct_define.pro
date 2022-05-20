@@ -3,7 +3,7 @@ function vis_fwdfit_pso_circle_struct_define, vis, $
    
   ;Internal routine used by vis_fwdfit_pso that returns a structure that defines one component of a Gaussian circular source.
   
-  ;vis: struct containing  the observed visibility values.
+  ;vis: struct containing the observed visibility values.
                                 
   phi= max(abs(vis.obsvis)) ;estimate_flux
 

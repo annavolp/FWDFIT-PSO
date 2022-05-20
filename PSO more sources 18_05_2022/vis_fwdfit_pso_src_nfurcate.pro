@@ -2,8 +2,8 @@ FUNCTION VIS_FWDFIT_PSO_SRC_NFURCATE, srcstr0, n_sources
   
   ;Returns a modified source structure based on replication of input source structure (the flux is plitted between components).
   
-  ;srcstr0: the structure to be replicated
-  ;n_sources: the number of the sources
+  ; srcstr0: the structure to be replicated
+  ; n_sources: the number of the sources
   
   srcstr          = CMREPLICATE(srcstr0, n_sources)      ; Create a n_sources-element structure array
   srcstr.srctype  = ' '

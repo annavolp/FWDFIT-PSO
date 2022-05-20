@@ -1,18 +1,27 @@
-FUNCTION vis_fwdfit_pso_func_makealoop, flux, fwhm1, eccen, x_loc, y_loc, pa, loop_angle, u, v
-
-;Internal routine used by vis_fwdfit_pso that calculates expected visibilities at specified u,v points for a single curved elliptical gaussian.
-;Single curved elliptical gaussian (loop) is obtained  by a set of equispaced circular gaussians.
+; NAME:
+;   vis_fwdfit_pso_func_makealoop
+;
+; PURPOSE:
+;   Internal routine used by vis_fwdfit_pso that calculates expected visibilities at specified u,v points for a single curved elliptical gaussian.
+;   Single curved elliptical gaussian (loop) is obtained  by a set of equispaced circular gaussians.
 
 ;INPUTS:
 ;   flux: loop total flux
-;   fwhm: sqrt(fwhmmajor * fwhmminor) 
-;   ecc: the eccentricity of the loop 
+;   fwhm1: sqrt(fwhmmajor * fwhmminor)
+;   eccen: the eccentricity of the loop
 ;   x_loc: source x location
 ;   y_loc: source y location
 ;   pa: the orientation angle
 ;   loop_angle: angle centered in the center of the circumference representing the curvature and subtended by the loop
 ;   u: u coordinates of the sampling frequencies
 ;   v: v coordinates of the sampling frequencies
+;
+; OUTPUT: 
+;   OBS: expected loop visibilities
+
+FUNCTION vis_fwdfit_pso_func_makealoop, flux, fwhm1, eccen, x_loc, y_loc, pa, loop_angle, u, v
+
+
 
 
 n_part      = n_elements(fwhm1)  ; number of birds 
