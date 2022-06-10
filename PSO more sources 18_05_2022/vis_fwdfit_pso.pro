@@ -368,8 +368,8 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
 
       fwhm_l = srcstr.srcfwhm_max * (1 - srcstr.eccen^2.)^0.25
 
-      lower_bound_e_unc = [0.7*min(srcstr.srcflux), -100., -100., min(fwhm_l)-30.>0., -5., 0.,-180.]
-      upper_bound_e_unc = [2.0*max(srcstr.srcflux), 100., 100., max(fwhm_l)+30., 5., 1. ,180.]
+      lower_bound_l_unc = [0.7*min(srcstr.srcflux), -100., -100., min(fwhm_l)-30.>0., -5., 0.,-180.]
+      upper_bound_l_unc = [2.0*max(srcstr.srcflux), 100., 100., max(fwhm_l)+30., 5., 1. ,180.]
 
       lower_bound_l_unc = cmreplicate(lower_bound_l_unc, n_loop)
       upper_bound_l_unc = cmreplicate(upper_bound_l_unc, n_loop)
