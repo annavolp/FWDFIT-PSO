@@ -707,7 +707,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
     endif else begin
       print, ' '
       print, ' '
-      print, 'Warning: for this configuration is not possible to compute uncertainty. '
+      print, 'Warning: for this configuration is not possible to compute the parameters uncertainty. '
       print, 'Try to use a simpler configuration. '
       print, ' '
       print, ' '
