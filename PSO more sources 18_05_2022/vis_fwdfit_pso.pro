@@ -1,3 +1,4 @@
+
 ; NAME:
 ;   vis_fwdfit_pso
 ;
@@ -23,16 +24,15 @@
 ;                    - 'ellipse': Gaussian elliptical source
 ;                    - 'loop'   : single curved elliptical gaussian
 ;
-
+;
 ;   vis         : struct containing  the observed visibility values
 ;     vis.obsvis: array containing the values of the observed visibilit
 ;     vis.sigamp: array containing the values of the errors on the observed visibility amplitudes
 ;     vis.u     : u coordinates of the sampling frequencies
 ;     vis.v     : v coordinates of the sampling frequencies
 ;
-;
-; KEYWORDS:
-; SRCIN       : struct containing for each source the parameters to optimize and those fixed, upper and lower bound of the variables.
+;     
+;   srcin       : struct containing for each source the parameters to optimize and those fixed, upper and lower bound of the variables.
 ;                 to create the structure srcin:
 ;                     srcin = VIS_FWDFIT_PSO_MULTIPLE_SRC_CREATE(vis, configuration)
 ;
@@ -40,12 +40,12 @@
 ;                                                             - vis_fwdfit_pso_circle_struct_define for the circle
 ;                                                             - vis_fwdfit_pso_ellipse_struct_define for the ellipse
 ;                                                             - vis_fwdfit_pso_loop_struct_define for the loop)
-;                                                             
-;               PARAM_OPT  : array containing the values of the parameters to keep fixed during the optimization.
+;
+;               PARAM_OPT  : struct containing the values of the parameters to keep fixed during the optimization.
 ;                           If an entry of 'param_opt' is set equal to 'fit', then the corresponding variable is optimized.
 ;                           Otherwise, its value is kept fixed equal to the entry of 'param_opt'
-;               LOWER_BOUND: array containing the lower bound values of the variables to optimize.
-;               UPPER_BOUND: array containing the upper bound values of the variables to optimize.
+;               LOWER_BOUND: struct containing the lower bound values of the variables to optimize.
+;               UPPER_BOUND: struct containing the upper bound values of the variables to optimize.
 ;
 ;               For different shapes we have:
 ;                 - 'circle'  : param_opt, lower_bound, upper_bound = [flux, x location, y location, FWHM]
@@ -56,6 +56,7 @@
 ;                               lower_bound, upper_bound = [flux, x location, y location, FWHM, ecc * cos(alpha), ecc * sin(alpha), loop_angle]
 ;
 ;
+; KEYWORDS:
 ;   N_BIRDS     : number of particles used in PSO
 ;                 (default is 100)
 ;   TOLERANCE   : tolerance for the stopping criterion
@@ -91,12 +92,11 @@
 
 
 function vis_fwdfit_pso, configuration, vis, srcin, $
-  ;lower_bound = lower_bound, upper_bound = upper_bound, param_opt = param_opt, $
-  n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
-  uncertainty = uncertainty, $
-  imsize=imsize, pixel=pixel, $
-  silent = silent, $
-  seedstart = seedstart
+                          n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
+                          uncertainty = uncertainty, $
+                          imsize=imsize, pixel=pixel, $
+                          silent = silent, $
+                          seedstart = seedstart
 
 
   default, n_birds, 100.
@@ -224,9 +224,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
   endif
 
   if n_elements(configuration) ge 2 then Nruns = 20.
-  ;if n_elements(configuration) ge 3 then Nruns = 30.
 
-  ;Nruns = 5
   xx_opt = []
   f = fltarr(Nruns)
 
@@ -319,8 +317,6 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
     ;  Nruns = 20.
     check = 1
     vect_check = fltarr(ntry)
-    ;  LOWER_BOUND_UNC=LOWER_BOUND
-    ;  UPPER_BOUND_UNC=UPPER_BOUND
 
     ; lower bound, upper_bound
     if n_elements(configuration) eq 1 then begin
@@ -602,9 +598,8 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
         endif
       endif
 
+
       ;************************************************************ stability check
-
-
       if (((n_ellipse gt 0) or (n_loop gt 0)) and (n_circle gt 0)) then begin
 
         dist__circle = fltarr(n_circle, n_sources - n_circle)
@@ -640,7 +635,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
           check +=1
           vect_check[n] += 1
         endif
-
+        
       endif
 
       if (((n_circle gt 0) or (n_ellipse gt 0)) and (n_loop gt 0)) then begin
@@ -685,7 +680,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
           fitsigmas[n_circle+i].srcfwhm_max    = stddev(trial_results[n_circle*4+6*i+3, *])
           fitsigmas[n_circle+i].srcfwhm_min    = stddev(trial_results[n_circle*4+6*i+4, *])
           avsrcpa                  = ATAN(TOTAL(SIN(trial_results[4*n_circle+6*i+5, *] * !DTOR)), $
-            TOTAL(COS(trial_results[4*n_circle+6*i+5, *] * !DTOR))) * !RADEG
+                                          TOTAL(COS(trial_results[4*n_circle+6*i+5, *] * !DTOR))) * !RADEG
           groupedpa                = (810 + avsrcpa - trial_results[4*n_circle+6*i+5, *]) MOD 180.
           fitsigmas[n_circle+i].srcpa          = STDDEV(groupedpa)
           fitsigmas[n_circle+i].srcx           = stddev(trial_results[4*n_circle+6*i+1,*])
@@ -700,7 +695,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
           fitsigmas[n_circle+n_ellipse+i].srcfwhm_max    = stddev(trial_results[n_circle*4+6*n_ellipse+7*i+3, *])
           fitsigmas[n_circle+n_ellipse+i].srcfwhm_min    = stddev(trial_results[n_circle*4+6*n_ellipse+7*i+4, *])
           avsrcpa                  = ATAN(TOTAL(SIN(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR)), $
-            TOTAL(COS(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR))) * !RADEG
+                                          TOTAL(COS(trial_results[4*n_circle+6*n_ellipse+7*i+5, *] * !DTOR))) * !RADEG
           groupedpa                = (810 + avsrcpa - trial_results[4*n_circle+6*n_ellipse+7*i+5, *]) MOD 180.
           fitsigmas[n_circle+n_ellipse+i].srcpa          = STDDEV(groupedpa)
           fitsigmas[n_circle+n_ellipse+i].srcx           = stddev(trial_results[4*n_circle+6*n_ellipse+7*i+1,*])
@@ -712,8 +707,8 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
     endif else begin
       print, ' '
       print, ' '
-      print, 'Warning: this configuration is not stable.'
-      print, 'Try to use a simpler configuration.'
+      print, 'Warning: for this configuration is not possible to compute uncertainty. '
+      print, 'Try to use a simpler configuration. '
       print, ' '
       print, ' '
 
@@ -727,12 +722,9 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
         fitsigmas[kk].loop_angle  = !values.f_nan
 
       endfor
+   endelse
 
-    endelse
-
-
-
-  endif
+endif
 
   fwdfit_pso_im = vis_FWDFIT_PSO_SOURCE2MAP(srcstr, configuration, pixel=pixel, imsize=imsize, xyoffset=vis[0].xyoffset)
 

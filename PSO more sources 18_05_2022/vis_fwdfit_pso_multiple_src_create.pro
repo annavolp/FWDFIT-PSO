@@ -10,12 +10,13 @@
 ;   
 ; INPUT:
 ;   vis :struct containing  the observed visibility values
+;   
 ;   configuration: array containing parametric shapes chosen for the forward fitting method (one for each source component)
 ;                    - 'circle' : Gaussian circular source
 ;                    - 'ellipse': Gaussian elliptical source
 ;                    - 'loop'   : single curved elliptical gaussian
 ;
-; Example: if configuration=['circle', 'ellipse', 'circle'], srcin has two main fields: srcin.circle and srcin.ellipse.
+; Example: if configuration=['circle', 'ellipse', 'circle'], srcin has two main fields: srcin.circle and srcin.ellipse
 ;                                                                srcin.circle has two main fields srcin.circle[0] and srcin.circle[1]
 ;                                                                both srcin.circle[0], srcin.circle[1] and srcin.ellipse have 3 fields:
 ;                                                                param_opt, lower_bound and upper_bound
@@ -23,12 +24,9 @@
 
 FUNCTION VIS_FWDFIT_PSO_MULTIPLE_SRC_CREATE, vis, configuration
 
-
-
   loc_circle  = where(configuration eq 'circle', n_circle)>0 
   loc_ellipse = where(configuration eq 'ellipse', n_ellipse)>0
   loc_loop    = where(configuration eq 'loop', n_loop)>0
-  
   
   if n_circle gt 0 then begin
     src_circle = vis_fwdfit_pso_circle_struct_define(vis)

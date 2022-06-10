@@ -18,6 +18,7 @@
 ;     vis.u     : u coordinates of the sampling frequencies
 ;     vis.v     : v coordinates of the sampling frequencies
 ;
+;             
 ; KEYWORDS:
 ;   SRCIN       : struct containing for each source the parameters to optimize and those fixed, upper and lower bound of the variables.
 ;                 to create the structure srcin:
@@ -52,13 +53,13 @@
 
 
 function stx_vis_fwdfit_pso, configuration, vis, $
-  srcin = srcin, $
-  n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
-  uncertainty = uncertainty, $
-  imsize=imsize, pixel=pixel, $
-  silent = silent, $
-  srcstr = srcstr,fitsigmas =fitsigmas, redchisq = redchisq, $
-  seedstart = seedstart
+                              srcin = srcin, $
+                              n_birds = n_birds, tolerance = tolerance, maxiter = maxiter, $
+                              uncertainty = uncertainty, $
+                              imsize=imsize, pixel=pixel, $
+                              silent = silent, $
+                              srcstr = srcstr,fitsigmas =fitsigmas, redchisq = redchisq, $
+                              seedstart = seedstart
 
 
   default, imsize, [128,128]
@@ -95,7 +96,7 @@ function stx_vis_fwdfit_pso, configuration, vis, $
         ; Set up file I/O error handling.
         ON_IOError, x_stix_c
         ; Cause type conversion error.
-        if flag then this_x_c = string(double(srcin.circle[j].param_opt.param_y)-58.2)
+        if flag then this_x_c = string(double(srcin.circle[j].param_opt.param_y) - 58.2)
 
         flag=1
         Catch, theError
@@ -211,11 +212,25 @@ function stx_vis_fwdfit_pso, configuration, vis, $
 
   this_time_range = stx_time2any(vis[0].time_range,/vms)
 
-  fwdfit_pso_map.xc = vis[0].xyoffset[0]
-  fwdfit_pso_map.yc = vis[0].xyoffset[1]
-
   fwdfit_pso_map.time = anytim((anytim(this_time_range[1])+anytim(this_time_range[0]))/2.,/vms)
   fwdfit_pso_map.DUR  = anytim(this_time_range[1])-anytim(this_time_range[0])
+  
+  ;rotate map to heliocentric view
+  fwdfit_pso__map = fwdfit_pso_map
+  fwdfit_pso__map.data = rotate(fwdfit_pso_map.data,1)
+
+;  fwdfit_pso__map.xc = vis[0].xyoffset[0] + stx_pointing[0]
+;  fwdfit_pso__map.yc = vis[0].xyoffset[1] + stx_pointing[1]
+;
+;  fwdfit_pso__map=rot_map(fwdfit_pso__map,-aux_data.ROLL_ANGLE,rcenter=[0.,0.])
+;  fwdfit_pso__map.ROLL_ANGLE = 0.
+;  add_prop,fwdfit_pso__map,rsun = aux_data.RSUN
+;  add_prop,fwdfit_pso__map,B0   = aux_data.B0
+;  add_prop,fwdfit_pso__map,L0   = aux_data.L0
+
+
+  fwdfit_pso_map.xc = vis[0].xyoffset[0]
+  fwdfit_pso_map.yc = vis[0].xyoffset[1]
 
   ;rotate map to heliocentric view
   fwdfit_pso__map = fwdfit_pso_map
@@ -236,14 +251,14 @@ function stx_vis_fwdfit_pso, configuration, vis, $
 
     PRINT
     PRINT, 'COMPONENT    TYPE          FLUX       FWHM MAX    FWHM MIN      Angle     X loc      Y loc      Loop FWHM'
-    PRINT, '                         cts/s/keV     arcsec      arcsec        deg      arcsec     arcsec        deg   '
+    PRINT, '                     cts/s/keV/cm^2    arcsec      arcsec        deg      arcsec     arcsec        deg   '
     PRINT
 
   endif
 
   nsrc = N_ELEMENTS(srcstr)
   FOR n = 0, nsrc-1 DO BEGIN
-
+    
     ; heliocentric view
     x_new = srcstr[n].srcy - this_vis[0].xyoffset[1]
     y_new = srcstr[n].srcx - this_vis[0].xyoffset[0]
@@ -251,19 +266,18 @@ function stx_vis_fwdfit_pso, configuration, vis, $
     ;; Center of the sources corrected for Frederic's mean shift values
     srcstr[n].srcx        = - x_new + vis[0].xyoffset[0] + 26.1
     srcstr[n].srcy        = y_new + vis[0].xyoffset[1]  + 58.2
-
+  
     srcstr[n].SRCPA += 90.
 
     if ~keyword_set(silent) then begin
 
       temp        = [ srcstr[n].srcflux,srcstr[n].srcfwhm_max,  srcstr[n].srcfwhm_min, $
-        srcstr[n].srcpa, $
-        ;x_roll, y_roll, $
-        srcstr[n].srcx, srcstr[n].srcy, srcstr[n].loop_angle]
+                      srcstr[n].srcpa, $
+                      srcstr[n].srcx, srcstr[n].srcy, srcstr[n].loop_angle]
       PRINT, n+1, srcstr[n].srctype, temp, FORMAT="(I5, A13, F13.2, 1F13.1, F12.1, 2F11.1, F11.1, 2F12.1)"
 
       temp        = [ fitsigmas[n].srcflux,fitsigmas[n].srcfwhm_max, fitsigmas[n].srcfwhm_min, $
-        fitsigmas[n].srcpa, fitsigmas[n].srcy, fitsigmas[n].srcx, fitsigmas[n].loop_angle]
+                      fitsigmas[n].srcpa, fitsigmas[n].srcy, fitsigmas[n].srcx, fitsigmas[n].loop_angle]
       PRINT, ' ', '(std)', temp, FORMAT="(A7, A11, F13.2, 1F13.1, F12.1, 2F11.1, F11.1, 2F12.1)"
       PRINT, ' '
 

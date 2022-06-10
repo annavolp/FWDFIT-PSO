@@ -1,8 +1,9 @@
+
 ; NAME:
 ;   vis_fwdfit_func_pso
 ;
 ; PURPOSE:
-;   Internal routine used by vis_fwdfit_pso that calculate expected visibilities at specified u,v points 
+;   Internal routine used by vis_fwdfit_pso that calculates expected visibilities at specified u,v points 
 ;   for a given set of source parameters.
 ;   
 ; OUTPUT: 
@@ -27,11 +28,10 @@ function vis_fwdfit_func_pso, xx, extra = extra
   loc_loop    = where(configuration eq 'loop', n_loop)>0
 
   n_particles = (size(xx,/dimension))[0]
-  ;n_sources   = (size(xx,/dimension))[1]/4
   n_sources   = n_elements(configuration)
-  n_vis    = n_elements(u)
-  u        = reform(u, [1, n_vis])
-  v        = reform(v, [1, n_vis])
+  n_vis       = n_elements(u)
+  u           = reform(u, [1, n_vis])
+  v           = reform(v, [1, n_vis])
 
   ones = fltarr(1, n_vis) + 1.
 
