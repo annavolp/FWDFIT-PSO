@@ -72,7 +72,7 @@
 ;   SILENT      : set to 1 for avoiding the print of the retrieved parameters
 ;   SEEDSTART   : costant used to initialize the random perturbation of visibilities when uncertainty is computed
 ;                 (default is fix(randomu(seed) * 100))
-;
+;   WARNING_CONF: warning if the uncertainty can not be computed for the chosen confuguration
 ;
 ;
 ;   SRCSTR: structure containing the values of the fitted parameters.
@@ -96,7 +96,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
                           uncertainty = uncertainty, $
                           imsize=imsize, pixel=pixel, $
                           silent = silent, $
-                          seedstart = seedstart
+                          seedstart = seedstart, warning_conf=warning_conf
 
 
   default, n_birds, 100.
@@ -105,6 +105,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
   default, imsize, [128,128]
   default, pixel, [1.,1.]
   default, seedstart, fix(randomu(seed) * 100)
+  default, warning_conf, 0
 
   loc_circle  = where(configuration eq 'circle', n_circle)>0
   loc_ellipse = where(configuration eq 'ellipse', n_ellipse)>0
@@ -705,12 +706,7 @@ function vis_fwdfit_pso, configuration, vis, srcin, $
       endif
 
     endif else begin
-      print, ' '
-      print, ' '
-      print, 'Warning: for this configuration is not possible to compute the parameters uncertainty. '
-      print, 'Try to use a simpler configuration. '
-      print, ' '
-      print, ' '
+      warning_conf=1
 
       for kk = 0, n_elements(configuration)-1 do begin
         fitsigmas[kk].srcflux     = !values.f_nan

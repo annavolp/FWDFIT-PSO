@@ -199,7 +199,7 @@ function stx_vis_fwdfit_pso, configuration, vis, $
                                 uncertainty = uncertainty, $
                                 imsize=imsize, pixel=pixel, $
                                 silent = silent, $
-                                seedstart = seedstart)
+                                seedstart = seedstart, warning_conf=warning_conf)
 
   srcstr = param_out.srcstr
   fitsigmas = param_out.fitsigmas
@@ -284,6 +284,17 @@ function stx_vis_fwdfit_pso, configuration, vis, $
     endif
 
   endfor
+  
+  if warning_conf then begin
+    
+    print, ' '
+    print, ' '
+    print, 'Warning: for this configuration it is not possible to compute the uncertainty on the parameters. '
+    print, 'Try using a simpler configuration. '
+    print, ' '
+    print, ' '
+    
+  endif
 
   undefine, srcin
 
